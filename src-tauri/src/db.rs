@@ -295,6 +295,61 @@ pub fn rename_project(conn: &Connection, id: &str, name: &str) -> AppResult<()> 
     Ok(())
 }
 
+/// 局部更新项目字段。传 None 的字段保持原值 —— 避免前端为了改个颜色把描述冲掉。
+pub fn update_project(
+    conn: &Connection,
+    id: &str,
+    name: Option<&str>,
+    description: Option<&str>,
+    color: Option<&str>,
+    identity: Option<&str>,
+) -> AppResult<()> {
+    let n = conn.execute(
+        "UPDATE projects SET
+            name        = COALESCE(?2, name),
+            description = COALESCE(?3, description),
+            color       = COALESCE(?4, color),
+            identity    = COALESCE(?5, identity),
+            updated_at  = ?6
+         WHERE id = ?1",
+        params![
+            id,
+            name.map(str::trim).filter(|s| !s.is_empty()),
+            description,
+            color,
+            identity,
+            now_rfc3339()
+        ],
+    )?;
+    if n == 0 {
+        return Err(AppError::NotFound("该项目已不存在。".into()));
+    }
+    Ok(())
+}
+
+/// 归档 / 取消归档。归档只是隐藏，不删数据。
+pub fn set_project_archived(conn: &Connection, id: &str, archived: bool) -> AppResult<()> {
+    conn.execute(
+        "UPDATE projects SET archived = ?2, updated_at = ?3 WHERE id = ?1",
+        params![id, if archived { 1 } else { 0 }, now_rfc3339()],
+    )?;
+    Ok(())
+}
+
+/// 按给定顺序重排项目。用于首页卡片拖拽。
+pub fn reorder_projects(conn: &mut Connection, ordered_ids: &[String]) -> AppResult<()> {
+    let now = now_rfc3339();
+    let tx = conn.transaction()?;
+    for (i, id) in ordered_ids.iter().enumerate() {
+        tx.execute(
+            "UPDATE projects SET sort_order = ?2, updated_at = ?3 WHERE id = ?1",
+            params![id, i as i64, now],
+        )?;
+    }
+    tx.commit()?;
+    Ok(())
+}
+
 /// 删除项目。级联删除章节与正文 —— 因此调用方**必须**先做确认。
 pub fn delete_project(conn: &Connection, id: &str) -> AppResult<()> {
     conn.execute("DELETE FROM projects WHERE id = ?1", params![id])?;
@@ -433,6 +488,48 @@ pub fn rename_doc(conn: &Connection, doc_id: &str, title: &str) -> AppResult<()>
 pub fn delete_doc(conn: &Connection, doc_id: &str) -> AppResult<()> {
     conn.execute("DELETE FROM documents WHERE id = ?1", params![doc_id])?;
     Ok(())
+}
+
+/// 按给定顺序重排章节（拖拽排序）。
+///
+/// 前端传的是「拖完之后的完整 id 序列」，这里一次事务写完，
+/// 避免逐条 invoke 造成中间态错乱。同时允许顺带改父节点（拖进/拖出卷）。
+pub fn reorder_docs(
+    conn: &mut Connection,
+    project_id: &str,
+    items: &[(String, Option<String>)],
+) -> AppResult<()> {
+    let now = now_rfc3339();
+    let tx = conn.transaction()?;
+    for (i, (id, parent)) in items.iter().enumerate() {
+        tx.execute(
+            "UPDATE documents SET sort_order = ?2, parent_id = ?3, updated_at = ?4
+             WHERE id = ?1 AND project_id = ?5",
+            params![id, i as i64, parent.as_deref(), now, project_id],
+        )?;
+    }
+    tx.execute(
+        "UPDATE projects SET updated_at = ?2 WHERE id = ?1",
+        params![project_id, now],
+    )?;
+    tx.commit()?;
+    Ok(())
+}
+
+/// 批量读取多篇正文，用于「整本导出」。返回 (doc_id, title, content)。
+pub fn read_project_contents(
+    conn: &Connection,
+    project_id: &str,
+) -> AppResult<Vec<(String, String, String)>> {
+    let mut stmt = conn.prepare(
+        "SELECT d.id, d.title, COALESCE(c.content, '')
+         FROM documents d
+         LEFT JOIN doc_contents c ON c.doc_id = d.id
+         WHERE d.project_id = ?1 AND d.kind != 'folder'
+         ORDER BY d.sort_order ASC, d.created_at ASC",
+    )?;
+    let rows = stmt.query_map([project_id], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)))?;
+    rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
 }
 
 // ─────────────────────────────────────────────
