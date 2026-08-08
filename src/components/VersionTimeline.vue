@@ -10,8 +10,21 @@ import {
   REPO_NAME,
   compareVersion,
 } from '../data/versions'
+import { openExternal, copyText, fetchWithTimeout } from '../utils/external'
 
 type Order = 'desc' | 'asc'
+
+const props = withDefaults(
+  defineProps<{
+    /** 全屏形态：铺满可用高度，展示完整时间轴 */
+    fullscreen?: boolean
+    /** 紧凑形态：只显示当前版本 + 检查更新入口，时间轴隐藏（设置面板内嵌用） */
+    compact?: boolean
+  }>(),
+  { fullscreen: false, compact: false },
+)
+const emit = defineEmits<{ (e: 'expand'): void }>()
+const fullscreen = computed(() => props.fullscreen)
 
 const order = ref<Order>('desc')
 const scroller = ref<HTMLElement | null>(null)
@@ -51,45 +64,96 @@ onMounted(async () => {
 onBeforeUnmount(() => io?.disconnect())
 watch(list, () => nextTick().then(bindObserver))
 
-/* ── 检查更新 ── */
+/* ── 检查更新 ──
+   v0.3.0 的问题：直接裸 fetch api.github.com，没有超时、没有备用源、
+   报错只抛「Failed to fetch」，用户完全不知道发生了什么。
+   现在：双数据源 + 8s 超时 + 人话错误提示 + 一键复制链接。 */
 type CheckState = 'idle' | 'checking' | 'latest' | 'outdated' | 'error'
 const checkState = ref<CheckState>('idle')
 const remoteVersion = ref('')
 const checkMsg = ref('')
+const copyHint = ref('')
+
+/** 依次尝试的接口：官方 API → ungh 公共镜像（国内可达性更好） */
+const UPDATE_SOURCES: { name: string; url: string; pick: (d: unknown) => string }[] = [
+  {
+    name: 'GitHub API',
+    url: `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/releases/latest`,
+    pick: (d) => {
+      const o = d as { tag_name?: string; name?: string }
+      return (o?.tag_name || o?.name || '').trim()
+    },
+  },
+  {
+    name: 'ungh 镜像',
+    url: `https://ungh.cc/repos/${REPO_OWNER}/${REPO_NAME}/releases/latest`,
+    pick: (d) => {
+      const o = d as { release?: { tag?: string; name?: string } }
+      return (o?.release?.tag || o?.release?.name || '').trim()
+    },
+  },
+]
 
 async function checkUpdate() {
   checkState.value = 'checking'
   checkMsg.value = ''
-  try {
-    const res = await fetch(
-      `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/releases/latest`,
-      { headers: { Accept: 'application/vnd.github+json' } },
-    )
-    if (!res.ok) throw new Error('HTTP ' + res.status)
-    const data = (await res.json()) as { tag_name?: string; name?: string }
-    const tag = (data.tag_name || data.name || '').trim()
-    if (!tag) throw new Error('未获取到版本号')
-    remoteVersion.value = tag.replace(/^v/i, '')
-    if (compareVersion(remoteVersion.value, CURRENT_VERSION) > 0) {
-      checkState.value = 'outdated'
-      checkMsg.value = `发现新版本 v${remoteVersion.value}`
-    } else {
-      checkState.value = 'latest'
-      checkMsg.value = '已是最新版本'
+  copyHint.value = ''
+
+  const errors: string[] = []
+  for (const src of UPDATE_SOURCES) {
+    try {
+      const res = await fetchWithTimeout(src.url, {
+        headers: { Accept: 'application/json' },
+      })
+      if (!res.ok) {
+        errors.push(`${src.name} 返回 ${res.status}`)
+        continue
+      }
+      const tag = src.pick(await res.json())
+      if (!tag) {
+        errors.push(`${src.name} 未返回版本号`)
+        continue
+      }
+      remoteVersion.value = tag.replace(/^v/i, '')
+      if (compareVersion(remoteVersion.value, CURRENT_VERSION) > 0) {
+        checkState.value = 'outdated'
+        checkMsg.value = `发现新版本 v${remoteVersion.value}（当前 v${CURRENT_VERSION}）`
+      } else {
+        checkState.value = 'latest'
+        checkMsg.value = `已是最新版本 v${CURRENT_VERSION}`
+      }
+      return
+    } catch (e) {
+      const isAbort = e instanceof DOMException && e.name === 'AbortError'
+      errors.push(`${src.name} ${isAbort ? '连接超时' : '连接失败'}`)
     }
-  } catch (e) {
-    checkState.value = 'error'
-    checkMsg.value = '检查失败：' + (e instanceof Error ? e.message : String(e))
+  }
+
+  checkState.value = 'error'
+  checkMsg.value =
+    `暂时联系不上更新服务器（${errors.join('；')}）。\n` +
+    '这通常是网络问题，不影响软件使用。可以点下面的按钮直接去发布页看看。'
+}
+
+async function openReleases() {
+  const ok = await openExternal(RELEASES_URL)
+  if (!ok) {
+    const copied = await copyText(RELEASES_URL)
+    copyHint.value = copied
+      ? '没能唤起浏览器，链接已复制到剪贴板，粘贴到浏览器打开即可。'
+      : `请手动访问：${RELEASES_URL}`
   }
 }
 
-function openReleases() {
-  window.open(RELEASES_URL, '_blank', 'noopener')
+async function copyReleasesUrl() {
+  const ok = await copyText(RELEASES_URL)
+  copyHint.value = ok ? '链接已复制 ✓' : '复制失败，请手动记录：' + RELEASES_URL
+  if (ok) setTimeout(() => (copyHint.value = ''), 2400)
 }
 </script>
 
 <template>
-  <section class="vt">
+  <section class="vt" :class="{ 'vt--full': fullscreen, 'vt--compact': compact }">
     <!-- 顶部：当前版本 / 上一版本 / 检查更新 -->
     <header class="vt-head">
       <div class="vt-now">
@@ -101,56 +165,73 @@ function openReleases() {
       </div>
 
       <div class="vt-head-actions">
-        <button class="wz-btn wz-btn--soft wz-btn--sm" :disabled="checkState === 'checking'" @click="checkUpdate">
+        <button
+          v-if="compact || !fullscreen"
+          class="wz-btn wz-btn--primary wz-btn--sm"
+          @click="emit('expand')"
+        >
+          全屏查看更新日志
+        </button>
+        <button
+          class="wz-btn wz-btn--soft wz-btn--sm"
+          :disabled="checkState === 'checking'"
+          @click="checkUpdate"
+        >
           {{ checkState === 'checking' ? '检查中…' : '检查更新' }}
         </button>
         <button class="wz-btn wz-btn--ghost wz-btn--sm" @click="openReleases">前往发布页</button>
+        <button class="wz-btn wz-btn--ghost wz-btn--sm" @click="copyReleasesUrl">复制链接</button>
       </div>
     </header>
 
     <p v-if="checkMsg" class="vt-check" :class="'is-' + checkState">
       {{ checkMsg }}
-      <button v-if="checkState === 'outdated'" class="vt-link" @click="openReleases">去下载 →</button>
-    </p>
-
-    <!-- 排序切换 -->
-    <div class="vt-toolbar">
-      <span class="vt-count">共 {{ VERSIONS.length }} 个版本</span>
-      <button class="vt-order" @click="toggleOrder">
-        <span class="vt-order-icon" :class="{ 'is-asc': order === 'asc' }">↓</span>
-        {{ order === 'desc' ? '由新到旧' : '由旧到新' }}
+      <button v-if="checkState === 'outdated'" class="vt-link" @click="openReleases">
+        去下载 →
       </button>
-    </div>
+    </p>
+    <p v-if="copyHint" class="vt-check is-idle">{{ copyHint }}</p>
 
-    <!-- 时间轴：条目多时限高内部滚动 -->
-    <div ref="scroller" class="vt-scroll">
-      <ol class="vt-axis">
-        <li
-          v-for="(v, i) in list"
-          :key="v.version"
-          class="vt-item"
-          :class="i % 2 === 0 ? 'is-left' : 'is-right'"
-        >
-          <span class="vt-dot" :class="{ 'is-current': v.version === CURRENT_VERSION }" aria-hidden="true" />
-          <div class="vt-card">
-            <div class="vt-card-head">
-              <strong class="vt-ver">v{{ v.version }}</strong>
-              <span v-if="v.codename" class="vt-codename">{{ v.codename }}</span>
-              <span v-if="v.version === CURRENT_VERSION" class="vt-badge">当前</span>
-              <time class="vt-date">{{ v.date }}</time>
+    <template v-if="!compact">
+      <!-- 排序切换 -->
+      <div class="vt-toolbar">
+        <span class="vt-count">共 {{ VERSIONS.length }} 个版本</span>
+        <button class="vt-order" @click="toggleOrder">
+          <span class="vt-order-icon" :class="{ 'is-asc': order === 'asc' }">↓</span>
+          {{ order === 'desc' ? '由新到旧' : '由旧到新' }}
+        </button>
+      </div>
+
+      <!-- 时间轴：条目多时限高内部滚动 -->
+      <div ref="scroller" class="vt-scroll">
+        <ol class="vt-axis">
+          <li
+            v-for="(v, i) in list"
+            :key="v.version"
+            class="vt-item"
+            :class="i % 2 === 0 ? 'is-left' : 'is-right'"
+          >
+            <span class="vt-dot" :class="{ 'is-current': v.version === CURRENT_VERSION }" aria-hidden="true" />
+            <div class="vt-card">
+              <div class="vt-card-head">
+                <strong class="vt-ver">v{{ v.version }}</strong>
+                <span v-if="v.codename" class="vt-codename">{{ v.codename }}</span>
+                <span v-if="v.version === CURRENT_VERSION" class="vt-badge">当前</span>
+                <time class="vt-date">{{ v.date }}</time>
+              </div>
+              <p class="vt-summary">{{ v.summary }}</p>
+              <ul class="vt-changes">
+                <li v-for="(c, ci) in v.changes" :key="ci" class="vt-change">
+                  <span class="vt-kind" :class="'k-' + c.kind">{{ CHANGE_KIND_LABEL[c.kind] }}</span>
+                  <span class="vt-target">{{ c.target }}</span>
+                  <span class="vt-detail">{{ c.detail }}</span>
+                </li>
+              </ul>
             </div>
-            <p class="vt-summary">{{ v.summary }}</p>
-            <ul class="vt-changes">
-              <li v-for="(c, ci) in v.changes" :key="ci" class="vt-change">
-                <span class="vt-kind" :class="'k-' + c.kind">{{ CHANGE_KIND_LABEL[c.kind] }}</span>
-                <span class="vt-target">{{ c.target }}</span>
-                <span class="vt-detail">{{ c.detail }}</span>
-              </li>
-            </ul>
-          </div>
-        </li>
-      </ol>
-    </div>
+          </li>
+        </ol>
+      </div>
+    </template>
   </section>
 </template>
 
@@ -200,11 +281,14 @@ function openReleases() {
 
 .vt-check {
   margin: 0;
-  font-size: 12px;
+  font-size: 12.5px;
+  line-height: 1.75;
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
   color: var(--c-text-secondary);
+  white-space: pre-line;
 }
 .vt-check.is-latest {
   color: var(--c-success);
@@ -264,7 +348,28 @@ function openReleases() {
   transform: rotate(180deg);
 }
 
-/* ── 滚动容器：上下渐隐遮罩 ── */
+/* ── 全屏形态 ── */
+.vt--full {
+  height: 100%;
+  gap: var(--space-4);
+}
+.vt--full .vt-scroll {
+  max-height: none;
+  flex: 1;
+  min-height: 0;
+}
+.vt--full .vt-now-ver {
+  font-size: 34px;
+}
+
+/* ── 紧凑形态（设置面板内嵌）：不放时间轴，只留入口 ── */
+.vt--compact {
+  gap: var(--space-4);
+}
+.vt--compact .vt-now-ver {
+  font-size: 26px;
+}
+
 .vt-scroll {
   position: relative;
   max-height: 46vh;
@@ -486,25 +591,21 @@ function openReleases() {
 :global([data-skin='genshin']) .vt-card:hover {
   box-shadow: 0 0 26px var(--c-accent-soft);
 }
-/* 绝区零：硬边闪烁，节奏更急 */
+/* 绝区零：硬边方点 + 平滑霓虹呼吸（原 steps(2) 硬闪已移除，会导致视觉频闪） */
 :global([data-skin='zenless']) .vt-dot.is-current {
-  animation: vt-flicker 1.1s steps(2, end) infinite;
+  animation: vt-neon 2s ease-in-out infinite;
   border-radius: 2px;
 }
 :global([data-skin='zenless']) .vt-card {
   border-radius: 4px;
 }
-@keyframes vt-flicker {
+@keyframes vt-neon {
   0%,
-  55%,
   100% {
-    opacity: 1;
-    box-shadow: 0 0 0 3px var(--c-bg-base), 0 0 16px var(--c-accent);
+    box-shadow: 0 0 0 3px var(--c-bg-base), 0 0 18px var(--c-accent);
   }
-  60%,
-  72% {
-    opacity: 0.45;
-    box-shadow: 0 0 0 3px var(--c-bg-base), 0 0 4px var(--c-accent);
+  50% {
+    box-shadow: 0 0 0 3px var(--c-bg-base), 0 0 6px var(--c-accent-soft);
   }
 }
 
