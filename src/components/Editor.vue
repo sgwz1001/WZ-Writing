@@ -66,10 +66,31 @@ onBeforeUnmount(() => {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--c-border);
+  position: relative;
+  border: 1px solid var(--c-border-strong);
   border-radius: var(--radius-xl);
   background: var(--c-surface-elevated);
+  box-shadow: var(--shadow-md);
   overflow: hidden;
+}
+
+/* 编辑器四角 L 形角标，呼应面板框架语言 */
+.editor-wrapper::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  opacity: 0.42;
+  background:
+    linear-gradient(var(--c-accent), var(--c-accent)) top left / 12px 2px no-repeat,
+    linear-gradient(var(--c-accent), var(--c-accent)) top left / 2px 12px no-repeat,
+    linear-gradient(var(--c-accent), var(--c-accent)) top right / 12px 2px no-repeat,
+    linear-gradient(var(--c-accent), var(--c-accent)) top right / 2px 12px no-repeat,
+    linear-gradient(var(--c-accent), var(--c-accent)) bottom left / 12px 2px no-repeat,
+    linear-gradient(var(--c-accent), var(--c-accent)) bottom left / 2px 12px no-repeat,
+    linear-gradient(var(--c-accent), var(--c-accent)) bottom right / 12px 2px no-repeat,
+    linear-gradient(var(--c-accent), var(--c-accent)) bottom right / 2px 12px no-repeat;
 }
 
 .editor-content {

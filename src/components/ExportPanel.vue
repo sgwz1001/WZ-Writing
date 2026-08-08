@@ -72,7 +72,6 @@ async function doExport() {
 }
 
 async function fetchLogs(): Promise<any[]> {
-  // MVP：先用快照表里的记录当日志；后续可接入 operation_log 表
   if (!editorStore.docId) return []
   const list = await invoke<any[]>('list_snapshots', { docId: editorStore.docId }).catch(() => [])
   return list.map((s) => ({
@@ -115,187 +114,79 @@ function close() {
 </script>
 
 <template>
-  <div>
-    <button class="btn" @click="visible = true">导入 / 导出</button>
+  <button class="wz-btn" @click="visible = true">导入 / 导出</button>
 
-    <Teleport to="body">
-      <div v-if="visible" class="overlay" @click.self="close">
-        <div class="modal">
-          <div class="modal-head">
-            <h3>批量导入 / 导出</h3>
-            <button class="close-btn" @click="close">×</button>
-          </div>
-
-          <div class="tabs">
-            <button :class="{ active: activeTab === 'doc' }" @click="activeTab = 'doc'">文档导出</button>
-            <button :class="{ active: activeTab === 'log' }" @click="activeTab = 'log'">日志导出</button>
-          </div>
-
-          <div v-if="activeTab === 'doc'" class="body">
-            <div class="doc-actions">
-              <button class="mini" @click="selectAll">全选</button>
-              <button class="mini" @click="selectNone">清空</button>
-            </div>
-            <div class="doc-list">
-              <label v-for="d in projectStore.docs" :key="d.id" class="doc-row">
-                <input :checked="selectedIds.has(d.id)" type="checkbox" @change="toggleDoc(d.id)" />
-                <span>{{ d.title }}</span>
-              </label>
-              <p v-if="!projectStore.docs.length" class="hint">当前项目没有章节。</p>
-            </div>
-
-            <div class="field">
-              <span class="field-label">格式</span>
-              <select v-model="format" class="field-input">
-                <option v-for="f in formats" :key="f" :value="f">
-                  {{ { txt: 'TXT 纯文本', md: 'Markdown', html: 'HTML 网页', docx: 'Word .docx', csv: 'CSV 表格', xlsx: 'Excel 表格', pdf: 'PDF（打印）' }[f] }}
-                </option>
-              </select>
-            </div>
-
-            <div class="actions">
-              <button class="btn-ghost" @click="doImport">从文件导入</button>
-              <button class="btn-primary" :disabled="busy || !canExport" @click="doExport">
-                {{ busy ? '处理中…' : '导出' }}
-              </button>
-            </div>
-          </div>
-
-          <div v-else class="body">
-            <p class="hint">导出当前文档的保存历史为 CSV / Excel。</p>
-            <div class="actions">
-              <button class="btn-primary" :disabled="busy" @click="format = 'csv'; doExport()">
-                {{ busy ? '处理中…' : '导出日志' }}
-              </button>
-            </div>
-          </div>
-
-          <p v-if="message" class="message">{{ message }}</p>
+  <Teleport to="body">
+    <div v-if="visible" class="wz-overlay" @click.self="close">
+      <div class="wz-modal">
+        <div class="wz-modal__head">
+          <h3>批量导入 / 导出</h3>
+          <button class="wz-icon-btn" title="关闭" @click="close">×</button>
         </div>
+
+        <div class="wz-tabs">
+          <button :class="{ 'is-active': activeTab === 'doc' }" @click="activeTab = 'doc'">文档导出</button>
+          <button :class="{ 'is-active': activeTab === 'log' }" @click="activeTab = 'log'">日志导出</button>
+        </div>
+
+        <div v-if="activeTab === 'doc'" class="wz-modal__body">
+          <div class="doc-actions">
+            <button class="wz-btn wz-btn--ghost wz-btn--sm" @click="selectAll">全选</button>
+            <button class="wz-btn wz-btn--ghost wz-btn--sm" @click="selectNone">清空</button>
+          </div>
+          <div class="doc-list">
+            <label v-for="d in projectStore.docs" :key="d.id" class="wz-list-item">
+              <span class="wz-check">
+                <input :checked="selectedIds.has(d.id)" type="checkbox" @change="toggleDoc(d.id)" />
+              </span>
+              <span class="doc-title">{{ d.title }}</span>
+            </label>
+            <p v-if="!projectStore.docs.length" class="wz-empty">当前项目没有章节。</p>
+          </div>
+
+          <div class="field">
+            <span class="field-label">格式</span>
+            <select v-model="format" class="wz-input field-input">
+              <option v-for="f in formats" :key="f" :value="f">
+                {{ { txt: 'TXT 纯文本', md: 'Markdown', html: 'HTML 网页', docx: 'Word .docx', pdf: 'PDF（打印）', csv: 'CSV 表格', xlsx: 'Excel 表格' }[f] }}
+              </option>
+            </select>
+          </div>
+
+          <div class="wz-modal__actions">
+            <button class="wz-btn wz-btn--ghost" @click="doImport">从文件导入</button>
+            <button class="wz-btn wz-btn--primary" :disabled="busy || !canExport" @click="doExport">
+              {{ busy ? '处理中…' : '导出' }}
+            </button>
+          </div>
+        </div>
+
+        <div v-else class="wz-modal__body">
+          <p class="hint">导出当前文档的保存历史为 CSV / Excel。</p>
+          <div class="wz-modal__actions">
+            <button class="wz-btn wz-btn--primary" :disabled="busy" @click="format = 'csv'; doExport()">
+              {{ busy ? '处理中…' : '导出日志' }}
+            </button>
+          </div>
+        </div>
+
+        <p v-if="message" class="message">{{ message }}</p>
       </div>
-    </Teleport>
-  </div>
+    </div>
+  </Teleport>
 </template>
 
 <style scoped>
-.btn {
-  padding: var(--space-2) var(--space-4);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--c-border);
-  background: var(--c-surface-elevated);
-  color: var(--c-text-base);
-  font-size: var(--fs-sm);
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background var(--dur-fast) ease;
-}
-
-.btn:hover {
-  background: var(--c-surface-hover);
-}
-
-.overlay {
-  position: fixed;
-  inset: 0;
-  z-index: var(--z-modal);
-  background: rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(var(--blur-sm));
-  display: grid;
-  place-items: center;
-  padding: var(--space-6);
-}
-
-.modal {
-  width: min(520px, 90vw);
-  max-height: 85vh;
-  background: var(--c-bg-base);
-  border: 1px solid var(--c-border);
-  border-radius: var(--radius-2xl);
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.modal-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--space-4) var(--space-5);
-  border-bottom: 1px solid var(--c-border);
-}
-
-.modal-head h3 {
-  margin: 0;
-  font-size: var(--fs-xl);
-  color: var(--c-text-base);
-}
-
-.close-btn {
-  width: 28px;
-  height: 28px;
-  border-radius: var(--radius-md);
-  display: grid;
-  place-items: center;
-  font-size: 18px;
-  color: var(--c-text-tertiary);
-  cursor: pointer;
-}
-
-.close-btn:hover {
-  background: var(--c-surface-hover);
-  color: var(--c-text-base);
-}
-
-.tabs {
-  display: flex;
-  gap: var(--space-1);
-  padding: var(--space-3) var(--space-5) 0;
-}
-
-.tabs button {
-  padding: var(--space-2) var(--space-4);
-  border-radius: var(--radius-md);
-  border: none;
-  background: transparent;
-  color: var(--c-text-secondary);
-  font-size: var(--fs-sm);
-  cursor: pointer;
-}
-
-.tabs button.active {
-  background: var(--c-surface-active);
-  color: var(--c-text-base);
-}
-
-.body {
-  padding: var(--space-4) var(--space-5);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  overflow-y: auto;
-}
-
 .doc-actions {
   display: flex;
   gap: var(--space-2);
-}
-
-.mini {
-  padding: var(--space-1) var(--space-3);
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--c-border);
-  background: var(--c-bg-sunken);
-  color: var(--c-text-secondary);
-  font-size: 12px;
-  cursor: pointer;
 }
 
 .doc-list {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
-  max-height: 200px;
+  max-height: 220px;
   overflow-y: auto;
   padding: var(--space-2);
   border: 1px solid var(--c-border);
@@ -303,19 +194,17 @@ function close() {
   background: var(--c-surface-elevated);
 }
 
-.doc-row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-2);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  font-size: var(--fs-sm);
-  color: var(--c-text-base);
+.wz-list-item {
+  gap: var(--space-3);
 }
 
-.doc-row:hover {
-  background: var(--c-surface-hover);
+.doc-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-sm);
 }
 
 .field {
@@ -332,48 +221,9 @@ function close() {
 
 .field-input {
   flex: 1;
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--c-border);
-  background: var(--c-surface-elevated);
-  color: var(--c-text-base);
-  font-size: var(--fs-sm);
 }
 
-.actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--space-3);
-  padding-top: var(--space-2);
-}
-
-.btn-ghost,
-.btn-primary {
-  padding: var(--space-2) var(--space-5);
-  border-radius: var(--radius-md);
-  font-size: var(--fs-sm);
-  cursor: pointer;
-  border: 1px solid var(--c-border);
-}
-
-.btn-ghost {
-  background: transparent;
-  color: var(--c-text-secondary);
-}
-
-.btn-primary {
-  background: var(--c-accent);
-  color: var(--c-text-on-accent);
-  border-color: transparent;
-}
-
-.btn-primary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.hint,
-.message {
+.hint {
   font-size: var(--fs-sm);
   color: var(--c-text-tertiary);
   margin: 0;
@@ -382,5 +232,7 @@ function close() {
 .message {
   color: var(--c-accent);
   padding: 0 var(--space-5) var(--space-4);
+  font-size: var(--fs-sm);
+  margin: 0;
 }
 </style>

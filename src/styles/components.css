@@ -1,0 +1,630 @@
+/**
+ * 文载 · 米哈游风 UI Kit
+ * ───────────────────────────────────────────────
+ * 集中实现按钮 / 面板 / 列表 / 输入 / 滑块 / 开关 / 标签页 / 模态 / 分隔。
+ * 三套皮肤（原神·星铁·绝区零）通过 CSS 变量自动上色，组件只套类名。
+ *
+ * 动效准则（来自 emil-design-eng 评审）：
+ *   · 按钮按下必须有 scale(0.97) 的即时反馈
+ *   · 缓动一律用令牌里的 --ease-out / --ease-spring，不用 ease-in
+ *   · hover / 按压光效用 @media (hover: hover) 门控，避免触屏误触发
+ *   · 模态从 scale(0.95)+opacity(0) 进入，transform-origin 居中
+ *   · 只动 transform / opacity / filter / 颜色，不碰 layout
+ */
+
+/* 大范围 accent 光晕（比 --c-accent-soft 更淡），用于背景与印章辉光。
+   用 color-mix 自动跟随各皮肤 accent，无需逐皮肤定义。 */
+:root {
+  --c-accent-weak: color-mix(in srgb, var(--c-accent) 14%, transparent);
+}
+
+/* ══════════════════════════════════════════════
+   一、按钮
+   ══════════════════════════════════════════════ */
+.wz-btn {
+  --_btn-bg: var(--c-surface-elevated);
+  --_btn-fg: var(--c-text-base);
+  --_btn-bd: var(--c-border-strong);
+  --_btn-glow: transparent;
+
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  min-height: 34px;
+  border: 1px solid var(--_btn-bd);
+  border-radius: var(--radius-md);
+  background: var(--_btn-bg);
+  color: var(--_btn-fg);
+  font-family: var(--font-ui);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  box-shadow: 0 0 0 0 var(--_btn-glow);
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+
+.wz-btn:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+/* 按压：所有按钮都要"被听见" */
+.wz-btn:not(:disabled):active {
+  transform: scale(0.97);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .wz-btn:not(:disabled):hover {
+    border-color: var(--c-accent);
+    box-shadow: 0 0 0 1px var(--c-accent-soft), 0 0 18px var(--c-accent-soft);
+  }
+  .wz-btn:not(:disabled):active {
+    transform: scale(0.96);
+  }
+}
+
+/* 主按钮：accent 填充 + 描边发光（米哈游招牌金/霓虹描边） */
+.wz-btn--primary {
+  --_btn-bg: var(--c-accent);
+  --_btn-fg: var(--c-accent-fg);
+  --_btn-bd: color-mix(in srgb, var(--c-accent) 70%, transparent);
+  --_btn-glow: var(--c-accent-soft);
+  font-weight: var(--fw-semibold);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .wz-btn--primary:not(:disabled):hover {
+    --_btn-bg: var(--c-accent-hover);
+    border-color: var(--c-accent-hover);
+    box-shadow: 0 0 0 1px var(--c-accent-soft), 0 0 26px var(--c-accent-soft);
+  }
+}
+
+/* 幽灵按钮：透明描边，hover 才浮出 */
+.wz-btn--ghost {
+  --_btn-bg: transparent;
+  --_btn-fg: var(--c-text-secondary);
+  --_btn-bd: var(--c-border);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .wz-btn--ghost:not(:disabled):hover {
+    --_btn-bg: var(--c-surface-hover);
+    --_btn-fg: var(--c-text-base);
+    border-color: var(--c-border-strong);
+    box-shadow: none;
+  }
+}
+
+/* 柔按钮：accent 极淡底，用于次级强调 */
+.wz-btn--soft {
+  --_btn-bg: var(--c-accent-soft);
+  --_btn-fg: var(--c-accent);
+  --_btn-bd: transparent;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .wz-btn--soft:not(:disabled):hover {
+    --_btn-bg: color-mix(in srgb, var(--c-accent-soft) 60%, var(--c-surface-hover));
+  }
+}
+
+/* 危险按钮（如删除） */
+.wz-btn--danger {
+  --_btn-bg: transparent;
+  --_btn-fg: var(--c-danger);
+  --_btn-bd: color-mix(in srgb, var(--c-danger) 40%, transparent);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .wz-btn--danger:not(:disabled):hover {
+    --_btn-bg: var(--c-danger);
+    --_btn-fg: #fff;
+    border-color: var(--c-danger);
+  }
+}
+
+/* 尺寸变体 */
+.wz-btn--sm {
+  min-height: 28px;
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--fs-xs);
+  border-radius: var(--radius-sm);
+}
+.wz-btn--lg {
+  min-height: 42px;
+  padding: var(--space-3) var(--space-6);
+  font-size: var(--fs-md);
+}
+
+/* 图标按钮（标题栏/工具栏圆形） */
+.wz-icon-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--c-text-secondary);
+  cursor: pointer;
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+
+.wz-icon-btn:active {
+  transform: scale(0.92);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .wz-icon-btn:hover {
+    background: var(--c-surface-hover);
+    color: var(--c-text-base);
+  }
+}
+
+/* ══════════════════════════════════════════════
+   二、面板（顶部高光线 + 四角 L 形角标）
+   ══════════════════════════════════════════════ */
+.wz-panel {
+  position: relative;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-xl);
+  backdrop-filter: blur(var(--blur-md)) saturate(1.4);
+  -webkit-backdrop-filter: blur(var(--blur-md)) saturate(1.4);
+  box-shadow: var(--shadow-sm);
+  overflow: clip;
+}
+
+/* 顶部高光：中间亮、两端淡，像面板被光打过 */
+.wz-panel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 14px;
+  right: 14px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--c-accent), transparent);
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+/* 四角 L 形角标 —— 米哈游 / 科幻 HUD 的标准框架语言 */
+.wz-panel::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  opacity: 0.5;
+  background:
+    linear-gradient(var(--c-accent), var(--c-accent)) top left / 14px 2px no-repeat,
+    linear-gradient(var(--c-accent), var(--c-accent)) top left / 2px 14px no-repeat,
+    linear-gradient(var(--c-accent), var(--c-accent)) top right / 14px 2px no-repeat,
+    linear-gradient(var(--c-accent), var(--c-accent)) top right / 2px 14px no-repeat,
+    linear-gradient(var(--c-accent), var(--c-accent)) bottom left / 14px 2px no-repeat,
+    linear-gradient(var(--c-accent), var(--c-accent)) bottom left / 2px 14px no-repeat,
+    linear-gradient(var(--c-accent), var(--c-accent)) bottom right / 14px 2px no-repeat,
+    linear-gradient(var(--c-accent), var(--c-accent)) bottom right / 2px 14px no-repeat;
+}
+
+.wz-panel--pad {
+  padding: var(--space-4);
+}
+.wz-panel--pad-lg {
+  padding: var(--space-5);
+}
+
+/* 实心面板（不透明，用于侧栏基底） */
+.wz-panel--solid {
+  background: var(--c-bg-raised);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* ══════════════════════════════════════════════
+   三、列表项 / 卡片
+   ══════════════════════════════════════════════ */
+.wz-list-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-3);
+  border-radius: var(--radius-lg);
+  color: var(--c-text-base);
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out);
+}
+
+/* 左侧 accent 细条，激活时点亮 */
+.wz-list-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 18%;
+  bottom: 18%;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--c-accent);
+  opacity: 0;
+  transform: scaleY(0.4);
+  transition: opacity var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .wz-list-item:hover {
+    background: var(--c-surface-hover);
+  }
+}
+
+.wz-list-item:hover::before {
+  opacity: 0.4;
+  transform: scaleY(0.7);
+}
+
+.wz-list-item.is-active {
+  background: var(--c-surface-active);
+  box-shadow: inset 0 0 0 1px var(--c-border-strong);
+}
+.wz-list-item.is-active::before {
+  opacity: 1;
+  transform: scaleY(1);
+}
+
+/* ══════════════════════════════════════════════
+   四、输入
+   ══════════════════════════════════════════════ */
+.wz-input {
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--c-border);
+  background: var(--c-surface-elevated);
+  color: var(--c-text-base);
+  font-size: var(--fs-sm);
+  transition: border-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out);
+}
+
+.wz-input::placeholder {
+  color: var(--c-text-tertiary);
+}
+
+.wz-input:focus {
+  outline: none;
+  border-color: var(--c-accent);
+  box-shadow: 0 0 0 3px var(--c-accent-soft);
+}
+
+select.wz-input {
+  cursor: pointer;
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--c-text-tertiary) 50%),
+    linear-gradient(135deg, var(--c-text-tertiary) 50%, transparent 50%);
+  background-position: calc(100% - 16px) 50%, calc(100% - 11px) 50%;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  padding-right: var(--space-8);
+}
+
+/* ══════════════════════════════════════════════
+   五、勾选 / 开关
+   ══════════════════════════════════════════════ */
+.wz-check {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-sm);
+  color: var(--c-text-secondary);
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.wz-check input {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  border: 1.5px solid var(--c-border-strong);
+  border-radius: var(--radius-xs);
+  background: var(--c-surface-elevated);
+  cursor: pointer;
+  position: relative;
+  transition: border-color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out);
+}
+
+.wz-check input:hover {
+  border-color: var(--c-accent);
+}
+
+.wz-check input:checked {
+  background: var(--c-accent);
+  border-color: var(--c-accent);
+  box-shadow: 0 0 0 3px var(--c-accent-soft);
+}
+
+.wz-check input:checked::after {
+  content: '';
+  position: absolute;
+  left: 4.5px;
+  top: 1px;
+  width: 4px;
+  height: 8px;
+  border: solid var(--c-accent-fg);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+/* ══════════════════════════════════════════════
+   六、滑块（分段强度：激进 ↔ 保守）
+   ══════════════════════════════════════════════ */
+.wz-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(
+    90deg,
+    var(--c-accent) 0%,
+    var(--c-accent) var(--_fill, 50%),
+    var(--c-border-strong) var(--_fill, 50%),
+    var(--c-border-strong) 100%
+  );
+  outline: none;
+  cursor: pointer;
+}
+
+.wz-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--c-accent-fg);
+  border: 3px solid var(--c-accent);
+  box-shadow: 0 0 0 4px var(--c-accent-soft), 0 2px 6px rgba(0, 0, 0, 0.3);
+  transition: transform var(--dur-fast) var(--ease-spring), box-shadow var(--dur-fast) var(--ease-out);
+}
+
+.wz-slider::-webkit-slider-thumb:active {
+  transform: scale(1.25);
+  box-shadow: 0 0 0 7px var(--c-accent-soft), 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.wz-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--c-accent-fg);
+  border: 3px solid var(--c-accent);
+  box-shadow: 0 0 0 4px var(--c-accent-soft);
+}
+
+.wz-slider::-moz-range-track {
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: var(--c-border-strong);
+}
+
+/* ══════════════════════════════════════════════
+   七、分隔
+   ══════════════════════════════════════════════ */
+.wz-divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--c-text-tertiary);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+}
+.wz-divider::before,
+.wz-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--c-border);
+}
+.wz-divider > span {
+  flex: none;
+}
+
+/* ══════════════════════════════════════════════
+   八、标签页
+   ══════════════════════════════════════════════ */
+.wz-tabs {
+  display: flex;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-5) 0;
+}
+.wz-tabs button {
+  padding: var(--space-2) var(--space-4);
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--c-text-secondary);
+  font-size: var(--fs-sm);
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  .wz-tabs button:hover {
+    background: var(--c-surface-hover);
+    color: var(--c-text-base);
+  }
+}
+.wz-tabs button.is-active {
+  background: var(--c-surface-active);
+  color: var(--c-text-base);
+  font-weight: var(--fw-medium);
+}
+
+/* ══════════════════════════════════════════════
+   九、模态（遮罩 + 卡片，带角标与入场动画）
+   ══════════════════════════════════════════════ */
+.wz-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: grid;
+  place-items: center;
+  padding: var(--space-6);
+  background: rgba(4, 6, 12, 0.5);
+  backdrop-filter: blur(var(--blur-sm));
+  -webkit-backdrop-filter: blur(var(--blur-sm));
+  animation: wz-fade-in var(--dur-base) var(--ease-out);
+}
+
+.wz-modal {
+  position: relative;
+  width: min(560px, 92vw);
+  max-height: 86vh;
+  display: flex;
+  flex-direction: column;
+  overflow: clip;
+  background: var(--c-bg-base);
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-lg), 0 0 60px var(--c-accent-soft);
+  transform-origin: center;
+  animation: wz-modal-in var(--dur-slow) var(--ease-spring);
+}
+
+/* 模态复用面板角标 */
+.wz-modal::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  opacity: 0.6;
+  background:
+    linear-gradient(var(--c-accent), var(--c-accent)) top left / 16px 2px no-repeat,
+    linear-gradient(var(--c-accent), var(--c-accent)) top left / 2px 16px no-repeat,
+    linear-gradient(var(--c-accent), var(--c-accent)) top right / 16px 2px no-repeat,
+    linear-gradient(var(--c-accent), var(--c-accent)) top right / 2px 16px no-repeat,
+    linear-gradient(var(--c-accent), var(--c-accent)) bottom left / 16px 2px no-repeat,
+    linear-gradient(var(--c-accent), var(--c-accent)) bottom left / 2px 16px no-repeat,
+    linear-gradient(var(--c-accent), var(--c-accent)) bottom right / 16px 2px no-repeat,
+    linear-gradient(var(--c-accent), var(--c-accent)) bottom right / 2px 16px no-repeat;
+}
+
+.wz-modal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--c-border);
+}
+.wz-modal__head h3 {
+  margin: 0;
+  font-size: var(--fs-xl);
+  color: var(--c-text-base);
+}
+.wz-modal__body {
+  padding: var(--space-4) var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  overflow-y: auto;
+  min-height: 0;
+}
+.wz-modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  border-top: 1px solid var(--c-border);
+}
+
+@keyframes wz-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes wz-modal-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* ══════════════════════════════════════════════
+   十、杂项
+   ══════════════════════════════════════════════ */
+.wz-empty {
+  margin: 0;
+  text-align: center;
+  color: var(--c-text-tertiary);
+  font-size: var(--fs-sm);
+  padding: var(--space-6) 0;
+}
+
+/* 元素色标签（给项目/章节打色标，复用元素色板） */
+.wz-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: var(--fw-medium);
+  background: var(--c-accent-soft);
+  color: var(--c-accent);
+}
+
+/* 让 html 全局背景带极淡的星点/网格质感（绝区零 / 星铁尤甚） */
+.wz-grid-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(var(--c-border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--c-border) 1px, transparent 1px);
+  background-size: 44px 44px;
+  opacity: 0.18;
+  mask-image: radial-gradient(circle at 50% 40%, #000 0%, transparent 75%);
+  -webkit-mask-image: radial-gradient(circle at 50% 40%, #000 0%, transparent 75%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wz-overlay,
+  .wz-modal {
+    animation-duration: 0.01ms !important;
+  }
+  .wz-btn,
+  .wz-icon-btn {
+    transition-duration: 0.01ms !important;
+  }
+}

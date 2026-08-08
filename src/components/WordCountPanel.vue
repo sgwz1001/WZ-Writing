@@ -5,15 +5,15 @@ const editor = useEditorStore()
 </script>
 
 <template>
-  <div class="panel">
-    <h4 class="panel-title">字数统计</h4>
+  <div class="wz-panel wz-panel--pad">
+    <div class="wz-divider"><span>字数统计</span></div>
 
     <div class="switches">
-      <label class="switch">
+      <label class="wz-check">
         <input v-model="editor.countPunctuation" type="checkbox" />
         <span>计入标点</span>
       </label>
-      <label class="switch">
+      <label class="wz-check">
         <input v-model="editor.countTitle" type="checkbox" />
         <span>计入标题</span>
       </label>
@@ -62,45 +62,20 @@ const editor = useEditorStore()
 </template>
 
 <style scoped>
-.panel {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  padding: var(--space-4);
-  background: var(--c-surface-elevated);
-  border: 1px solid var(--c-border);
-  border-radius: var(--radius-xl);
-  min-width: 260px;
-}
-
-.panel-title {
-  margin: 0;
-  font-size: var(--fs-md);
-  color: var(--c-text-base);
-}
-
 .switches {
   display: flex;
   gap: var(--space-4);
-}
-
-.switch {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  font-size: var(--fs-sm);
-  color: var(--c-text-secondary);
-  cursor: pointer;
+  flex-wrap: wrap;
 }
 
 .big-number {
   display: flex;
   align-items: baseline;
+  justify-content: center;
   gap: var(--space-2);
   padding: var(--space-4);
   border-radius: var(--radius-lg);
   background: var(--c-surface-active);
-  justify-content: center;
 }
 
 .num {
@@ -108,6 +83,7 @@ const editor = useEditorStore()
   font-weight: 700;
   color: var(--c-accent);
   line-height: 1;
+  text-shadow: 0 0 18px var(--c-accent-soft);
 }
 
 .unit {

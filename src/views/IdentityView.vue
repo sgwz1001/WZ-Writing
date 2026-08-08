@@ -43,7 +43,7 @@ function enterStudio() {
       </button>
     </div>
 
-    <div class="selected-panel">
+    <div class="selected-panel wz-panel">
       <div class="panel-meta">
         <span class="panel-icon">{{ getIdentity(selected).icon }}</span>
         <div>
@@ -55,7 +55,7 @@ function enterStudio() {
       </div>
       <p class="panel-explain">{{ getIdentity(selected).maxim.gloss }}</p>
       <p class="panel-affinity">{{ getIdentity(selected).maxim.affinity }}</p>
-      <button class="btn-primary" @click="enterStudio">进入工作室</button>
+      <button class="wz-btn wz-btn--primary" @click="enterStudio">进入工作室</button>
     </div>
   </div>
 </template>
@@ -133,10 +133,32 @@ function enterStudio() {
   border-color: var(--c-accent-weak);
 }
 
+.identity-card:active {
+  transform: scale(0.97);
+}
+
 .identity-card.active {
   border-color: var(--c-accent);
   background: var(--c-surface-active);
-  box-shadow: 0 0 0 1px var(--c-accent) inset;
+  box-shadow: 0 0 0 1px var(--c-accent) inset, 0 0 22px var(--c-accent-soft);
+}
+
+.identity-card.active::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  opacity: 0.6;
+  background:
+    linear-gradient(var(--c-accent), var(--c-accent)) top left / 14px 2px no-repeat,
+    linear-gradient(var(--c-accent), var(--c-accent)) top left / 2px 14px no-repeat,
+    linear-gradient(var(--c-accent), var(--c-accent)) top right / 14px 2px no-repeat,
+    linear-gradient(var(--c-accent), var(--c-accent)) top right / 2px 14px no-repeat,
+    linear-gradient(var(--c-accent), var(--c-accent)) bottom left / 14px 2px no-repeat,
+    linear-gradient(var(--c-accent), var(--c-accent)) bottom left / 2px 14px no-repeat,
+    linear-gradient(var(--c-accent), var(--c-accent)) bottom right / 14px 2px no-repeat,
+    linear-gradient(var(--c-accent), var(--c-accent)) bottom right / 2px 14px no-repeat;
 }
 
 .card-top {
@@ -241,23 +263,7 @@ function enterStudio() {
   line-height: 1.7;
 }
 
-.btn-primary {
-  align-self: flex-end;
-  padding: var(--space-3) var(--space-6);
-  border-radius: var(--radius-xl);
-  border: none;
-  background: var(--c-accent);
-  color: var(--c-text-on-accent);
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: filter 0.2s ease, transform 0.2s ease;
-}
-
-.btn-primary:hover {
-  filter: brightness(1.08);
-  transform: translateY(-1px);
-}
+/* 进入按钮已统一为 .wz-btn .wz-btn--primary（见 components.css），不再重复定义。 */
 
 @media (max-width: 640px) {
   .identity-page {

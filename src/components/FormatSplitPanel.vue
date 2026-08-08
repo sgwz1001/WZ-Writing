@@ -25,14 +25,17 @@ function cancel() {
 </script>
 
 <template>
-  <div>
-    <button class="btn" @click="open = true; updatePreview()">一键排版</button>
+  <button class="wz-btn" @click="open = true; updatePreview()">一键排版</button>
 
-    <Teleport to="body">
-      <div v-if="open" class="overlay" @click.self="cancel">
-        <div class="modal">
+  <Teleport to="body">
+    <div v-if="open" class="wz-overlay" @click.self="cancel">
+      <div class="wz-modal">
+        <div class="wz-modal__head">
           <h3>一键排版 · 段落拆分</h3>
+          <button class="wz-icon-btn" title="关闭" @click="cancel">×</button>
+        </div>
 
+        <div class="wz-modal__body">
           <div class="slider-wrap">
             <div class="slider-labels">
               <span>激进（更碎）</span>
@@ -44,84 +47,37 @@ function cancel() {
               min="0"
               max="100"
               step="1"
-              class="slider"
+              class="wz-slider"
+              :style="{ '--_fill': level + '%' }"
               @input="updatePreview"
             />
+            <p class="slider-hint">越靠左，分词越激进、段落越细碎；越靠右越保守、段落越长。</p>
           </div>
 
-          <div class="preview-shell">
-            <div class="preview">
-              <p
-                v-for="(chunk, i) in preview"
-                :key="i"
-                class="chunk"
-                :class="{ hard: chunk.fromHardBreak }"
-              >
-                {{ chunk.text }}
-              </p>
-              <p v-if="!preview.length" class="empty">当前无内容可预览</p>
-            </div>
-          </div>
-
-          <div class="actions">
-            <button class="btn-ghost" @click="cancel">取消</button>
-            <button class="btn-primary" @click="apply">应用</button>
+          <div class="preview">
+            <p
+              v-for="(chunk, i) in preview"
+              :key="i"
+              class="chunk"
+              :class="{ hard: chunk.fromHardBreak }"
+            >
+              {{ chunk.text }}
+            </p>
+            <p v-if="!preview.length" class="wz-empty">当前无内容可预览</p>
           </div>
         </div>
+
+        <div class="wz-modal__actions">
+          <button class="wz-btn wz-btn--ghost" @click="cancel">取消</button>
+          <button class="wz-btn wz-btn--primary" @click="apply">应用</button>
+        </div>
       </div>
-    </Teleport>
-  </div>
+    </div>
+  </Teleport>
 </template>
 
 <style scoped>
-.btn {
-  padding: var(--space-2) var(--space-4);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--c-border);
-  background: var(--c-surface-elevated);
-  color: var(--c-text-base);
-  font-size: var(--fs-sm);
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background var(--dur-fast) ease;
-}
-
-.btn:hover {
-  background: var(--c-surface-hover);
-}
-
-.overlay {
-  position: fixed;
-  inset: 0;
-  z-index: var(--z-modal);
-  background: rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(var(--blur-sm));
-  display: grid;
-  place-items: center;
-  padding: var(--space-6);
-}
-
-.modal {
-  width: min(720px, 90vw);
-  max-height: 85vh;
-  background: var(--c-bg-base);
-  border: 1px solid var(--c-border);
-  border-radius: var(--radius-2xl);
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.modal h3 {
-  margin: 0;
-  padding: var(--space-5) var(--space-5) 0;
-  font-size: var(--fs-xl);
-  color: var(--c-text-base);
-}
-
 .slider-wrap {
-  padding: var(--space-4) var(--space-5);
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
@@ -134,23 +90,17 @@ function cancel() {
   color: var(--c-text-tertiary);
 }
 
-.slider {
-  width: 100%;
-  accent-color: var(--c-accent);
-  cursor: pointer;
-}
-
-.preview-shell {
-  flex: 1;
-  min-height: 0;
-  padding: 0 var(--space-5);
-  display: flex;
-  flex-direction: column;
+.slider-hint {
+  margin: 0;
+  font-size: 11px;
+  color: var(--c-text-tertiary);
+  line-height: 1.5;
 }
 
 .preview {
   flex: 1;
-  min-height: 0;
+  min-height: 220px;
+  max-height: 46vh;
   overflow-y: auto;
   padding: var(--space-4);
   background: var(--c-surface-elevated);
@@ -170,39 +120,5 @@ function cancel() {
   border-left: 3px solid var(--c-accent);
   padding-left: var(--space-3);
   text-indent: 0;
-}
-
-.empty {
-  color: var(--c-text-tertiary);
-  text-align: center;
-  margin: 0;
-}
-
-.actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--space-3);
-  padding: var(--space-4) var(--space-5);
-  border-top: 1px solid var(--c-border);
-}
-
-.btn-ghost,
-.btn-primary {
-  padding: var(--space-2) var(--space-5);
-  border-radius: var(--radius-md);
-  font-size: var(--fs-sm);
-  cursor: pointer;
-  border: 1px solid var(--c-border);
-}
-
-.btn-ghost {
-  background: transparent;
-  color: var(--c-text-secondary);
-}
-
-.btn-primary {
-  background: var(--c-accent);
-  color: var(--c-text-on-accent);
-  border-color: transparent;
 }
 </style>
