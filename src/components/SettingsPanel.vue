@@ -3,12 +3,16 @@ import { ref } from 'vue'
 import { useAppearanceStore, type Skin } from '../stores/appearance'
 import ApiSettingsPanel from './ApiSettingsPanel.vue'
 import VersionTimeline from './VersionTimeline.vue'
+import ChangelogFullscreen from './ChangelogFullscreen.vue'
 import { CURRENT_VERSION } from '../data/versions'
 
 const emit = defineEmits<{ (e: 'close'): void }>()
 
 const appearance = useAppearanceStore()
 const showApi = ref(false)
+const showChangelog = ref(false)
+const bgInput = ref<HTMLInputElement | null>(null)
+const bgError = ref('')
 
 type TabKey = 'look' | 'motion' | 'ai' | 'version'
 const tab = ref<TabKey>('look')
@@ -25,6 +29,47 @@ const SKINS: { key: Skin; name: string; desc: string }[] = [
   { key: 'genshin', name: '提瓦特', desc: '原神 · 羊皮纸与暖金' },
   { key: 'zenless', name: '新艾利都', desc: '绝区零 · 荧光硬边' },
 ]
+
+/**
+ * 上传背景图。
+ * 压缩到最长边 1600px 的 JPEG，控制 localStorage 体积（约几十 KB），
+ * 纯 Web 实现，不依赖系统对话框权限。
+ */
+function onBgPick(e: Event) {
+  const input = e.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file) return
+  bgError.value = ''
+  const img = new Image()
+  const url = URL.createObjectURL(file)
+  img.onload = () => {
+    try {
+      const max = 1600
+      const scale = Math.min(1, max / Math.max(img.width, img.height))
+      const w = Math.round(img.width * scale)
+      const h = Math.round(img.height * scale)
+      const canvas = document.createElement('canvas')
+      canvas.width = w
+      canvas.height = h
+      const ctx = canvas.getContext('2d')
+      if (!ctx) throw new Error('无法处理图片')
+      ctx.drawImage(img, 0, 0, w, h)
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.82)
+      if (dataUrl.length > 2_500_000) throw new Error('图片仍过大，请换一张更小的')
+      appearance.setBgImage(dataUrl)
+    } catch (err) {
+      bgError.value = err instanceof Error ? err.message : String(err)
+    } finally {
+      URL.revokeObjectURL(url)
+      if (input) input.value = ''
+    }
+  }
+  img.onerror = () => {
+    bgError.value = '无法读取这张图片，请换一张。'
+    URL.revokeObjectURL(url)
+  }
+  img.src = url
+}
 </script>
 
 <template>
@@ -98,6 +143,57 @@ const SKINS: { key: Skin; name: string; desc: string }[] = [
               <span class="slider-val">{{ appearance.blur }}px</span>
             </div>
             <p class="pane-hint">数值越大背景越朦胧；设为 0 则完全实心，低配机器更流畅。</p>
+
+            <h4 class="pane-title">背景图</h4>
+            <div class="bg-row">
+              <input
+                ref="bgInput"
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                class="bg-file"
+                @change="onBgPick"
+              />
+              <button
+                v-if="!appearance.bgImage"
+                class="wz-btn wz-btn--sm"
+                @click="bgInput?.click()"
+              >
+                上传图片
+              </button>
+              <template v-else>
+                <button class="wz-btn wz-btn--sm wz-btn--primary" @click="bgInput?.click()">更换</button>
+                <button class="wz-btn wz-btn--sm wz-btn--ghost" @click="appearance.setBgImage(null)">清除</button>
+              </template>
+            </div>
+            <div v-if="appearance.bgImage" class="slider-row bg-veil-row">
+              <span class="veil-label">背景浓度</span>
+              <input
+                class="wz-slider"
+                type="range"
+                min="0.2"
+                max="0.95"
+                step="0.01"
+                :value="appearance.bgVeil"
+                @input="appearance.setBgVeil(Number(($event.target as HTMLInputElement).value))"
+              />
+              <span class="slider-val">{{ Math.round(appearance.bgVeil * 100) }}%</span>
+            </div>
+            <p class="pane-hint">背景只作氛围，正文永远压在一层同色幕布之上，保证可读。图片仅存本机。</p>
+            <p v-if="bgError" class="pane-error">{{ bgError }}</p>
+
+            <h4 class="pane-title">身份小火苗</h4>
+            <label class="switch-row">
+              <span class="switch-text">
+                <strong>标记最近常写的身份 🔥</strong>
+                <small>在身份一览与首页标出 14 天内最常写的两个身份，点一下直达上次写到的地方。设置会自动记住。</small>
+              </span>
+              <input
+                class="wz-check switch-input"
+                type="checkbox"
+                :checked="appearance.flameHint"
+                @change="appearance.setFlameHint(($event.target as HTMLInputElement).checked)"
+              />
+            </label>
           </section>
 
           <!-- 动效 -->
@@ -124,9 +220,12 @@ const SKINS: { key: Skin; name: string; desc: string }[] = [
             <ul class="feat-list">
               <li><b>AI / API 调用</b>：生成标题、品评诗词、测试连接等耗时操作时，全屏浮现加载层。</li>
               <li><b>页面跳转</b>：择道页与工作室之间切换时淡入上移，配合载入提示。</li>
-              <li><b>皮肤差异</b>：星穹为环形扫描、提瓦特为双环呼吸、新艾利都为硬边闪烁。</li>
+              <li><b>皮肤差异</b>：星穹为环形扫描、提瓦特为双环呼吸、新艾利都为硬边霓虹呼吸。</li>
             </ul>
             <p class="pane-hint">若系统已开启「减弱动态效果」，应用会自动遵循，无需手动关闭。</p>
+            <p class="pane-hint">
+              v0.4.0 起，200 毫秒内完成的操作不再弹出加载层 —— 快速跳转不会再看到一闪而过的蒙层。
+            </p>
           </section>
 
           <!-- AI -->
@@ -145,13 +244,16 @@ const SKINS: { key: Skin; name: string; desc: string }[] = [
             </ul>
           </section>
 
-          <!-- 版本 -->
-          <VersionTimeline v-else-if="tab === 'version'" />
+          <!-- 版本：仅入口，完整日志点全屏看 -->
+          <VersionTimeline v-else-if="tab === 'version'" compact @expand="showChangelog = true" />
         </div>
       </div>
     </div>
 
     <ApiSettingsPanel v-if="showApi" @close="showApi = false" />
+    <Teleport to="body">
+      <ChangelogFullscreen v-if="showChangelog" @close="showChangelog = false" />
+    </Teleport>
   </div>
 </template>
 
@@ -378,6 +480,30 @@ const SKINS: { key: Skin; name: string; desc: string }[] = [
 .anim-state.is-on {
   color: var(--c-accent);
   background: var(--c-accent-soft);
+}
+
+/* ── 背景图 ── */
+.bg-file {
+  display: none;
+}
+.bg-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+.bg-veil-row {
+  margin-top: 2px;
+}
+.veil-label {
+  font-size: 12px;
+  color: var(--c-text-secondary);
+  white-space: nowrap;
+}
+.pane-error {
+  margin: 0;
+  font-size: 12px;
+  color: var(--c-error, #ff5a5a);
 }
 
 /* ── 说明列表 ── */
