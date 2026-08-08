@@ -39,6 +39,20 @@ export const useEditorStore = defineStore('editor', () => {
     lastHeartbeat.value = Date.now()
   }
 
+  /**
+   * 合上当前文稿。
+   * 切换项目时必须调用 —— 否则心跳还会把内容往上一个项目的章节里写。
+   */
+  function close() {
+    docId.value = null
+    projectId.value = null
+    title.value = '未命名'
+    content.value = ''
+    cursor.value = 0
+    charCount.value = 0
+    savedAt.value = null
+  }
+
   async function heartbeat() {
     if (!docId.value || !projectId.value) return
 
@@ -136,6 +150,7 @@ export const useEditorStore = defineStore('editor', () => {
     stats,
     displayCharCount,
     open,
+    close,
     heartbeat,
     save,
     panicSave,
