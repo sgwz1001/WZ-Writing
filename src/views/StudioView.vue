@@ -13,6 +13,8 @@ import CorrectionPanel from '../components/CorrectionPanel.vue'
 import LexiconPanel from '../components/LexiconPanel.vue'
 import ApiSettingsPanel from '../components/ApiSettingsPanel.vue'
 import TitleSuggestPanel from '../components/TitleSuggestPanel.vue'
+import WeChatPanel from '../components/WeChatPanel.vue'
+import PoetryPanel from '../components/PoetryPanel.vue'
 import { useCorrectionStore } from '../stores/correction'
 
 const appearance = useAppearanceStore()
@@ -26,6 +28,8 @@ const activeDoc = ref<string | null>(null)
 const showLexicon = ref(false)
 const showApiSettings = ref(false)
 const showTitle = ref(false)
+const showWeChat = ref(false)
+const showPoetry = ref(false)
 const identityId = ref(localStorage.getItem('wenzai:last-identity') || 'general')
 
 const identity = getIdentity(identityId.value)
@@ -139,6 +143,8 @@ function cycleSkin() {
             <button class="wz-btn wz-btn--ghost wz-btn--sm" @click="showLexicon = true">词库</button>
             <button class="wz-btn wz-btn--ghost wz-btn--sm" @click="showApiSettings = true">AI</button>
             <FormatSplitPanel />
+            <button class="wz-btn wz-btn--ghost wz-btn--sm" @click="showWeChat = true">公众号</button>
+            <button class="wz-btn wz-btn--ghost wz-btn--sm" @click="showPoetry = true">格律</button>
             <ExportPanel />
           </div>
           <span class="save-state" :class="{ saving: editorStore.saving }">
@@ -161,6 +167,8 @@ function cycleSkin() {
     <LexiconPanel v-if="showLexicon" @close="showLexicon = false" />
     <ApiSettingsPanel v-if="showApiSettings" @close="showApiSettings = false" />
     <TitleSuggestPanel v-if="showTitle" @close="showTitle = false" />
+    <WeChatPanel v-if="showWeChat" @close="showWeChat = false" />
+    <PoetryPanel v-if="showPoetry" @close="showPoetry = false" />
   </div>
 </template>
 
