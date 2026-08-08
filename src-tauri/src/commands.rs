@@ -44,6 +44,43 @@ pub fn rename_project(state: State<'_, AppState>, id: String, name: String) -> A
     db::rename_project(&conn, &id, &name)
 }
 
+/// 局部更新项目。未传的字段保持原值。
+#[tauri::command]
+pub fn update_project(
+    state: State<'_, AppState>,
+    id: String,
+    name: Option<String>,
+    description: Option<String>,
+    color: Option<String>,
+    identity: Option<String>,
+) -> AppResult<()> {
+    let conn = state.conn.lock();
+    db::update_project(
+        &conn,
+        &id,
+        name.as_deref(),
+        description.as_deref(),
+        color.as_deref(),
+        identity.as_deref(),
+    )
+}
+
+#[tauri::command]
+pub fn set_project_archived(
+    state: State<'_, AppState>,
+    id: String,
+    archived: bool,
+) -> AppResult<()> {
+    let conn = state.conn.lock();
+    db::set_project_archived(&conn, &id, archived)
+}
+
+#[tauri::command]
+pub fn reorder_projects(state: State<'_, AppState>, ordered_ids: Vec<String>) -> AppResult<()> {
+    let mut conn = state.conn.lock();
+    db::reorder_projects(&mut conn, &ordered_ids)
+}
+
 /// 删除项目。前端**必须**先弹二次确认 —— 这里不再拦。
 #[tauri::command]
 pub fn delete_project(state: State<'_, AppState>, id: String) -> AppResult<()> {
@@ -112,6 +149,50 @@ pub fn delete_doc(state: State<'_, AppState>, doc_id: String) -> AppResult<()> {
     }
     let _ = state.release(&doc_id);
     Ok(())
+}
+
+/// 拖拽排序用的一条条目：id + 拖完之后所属的父节点。
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DocOrderItem {
+    pub id: String,
+    #[serde(default)]
+    pub parent_id: Option<String>,
+}
+
+/// 章节拖拽排序。前端传「拖完之后的完整顺序」，后端一次事务写完。
+#[tauri::command]
+pub fn reorder_docs(
+    state: State<'_, AppState>,
+    project_id: String,
+    items: Vec<DocOrderItem>,
+) -> AppResult<()> {
+    let pairs: Vec<(String, Option<String>)> =
+        items.into_iter().map(|i| (i.id, i.parent_id)).collect();
+    let mut conn = state.conn.lock();
+    db::reorder_docs(&mut conn, &project_id, &pairs)
+}
+
+/// 一次性取出整本书的正文，用于批量导出。
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ExportChapter {
+    pub id: String,
+    pub title: String,
+    pub content: String,
+}
+
+#[tauri::command]
+pub fn read_project_contents(
+    state: State<'_, AppState>,
+    project_id: String,
+) -> AppResult<Vec<ExportChapter>> {
+    let conn = state.conn.lock();
+    let rows = db::read_project_contents(&conn, &project_id)?;
+    Ok(rows
+        .into_iter()
+        .map(|(id, title, content)| ExportChapter { id, title, content })
+        .collect())
 }
 
 // ─────────────────────────────────────────────
