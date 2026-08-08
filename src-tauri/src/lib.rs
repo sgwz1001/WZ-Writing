@@ -187,6 +187,9 @@ pub fn run() {
             commands::list_projects,
             commands::create_project,
             commands::rename_project,
+            commands::update_project,
+            commands::set_project_archived,
+            commands::reorder_projects,
             commands::delete_project,
             // 文档
             commands::list_docs,
@@ -195,6 +198,8 @@ pub fn run() {
             commands::save_doc,
             commands::rename_doc,
             commands::delete_doc,
+            commands::reorder_docs,
+            commands::read_project_contents,
             // 缓冲
             commands::heartbeat,
             commands::flush_doc,
