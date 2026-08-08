@@ -5,8 +5,10 @@ import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow'
 import TitleBar from './components/TitleBar.vue'
 import LoadingOverlay from './components/LoadingOverlay.vue'
 import SettingsPanel from './components/SettingsPanel.vue'
+import { useAppearanceStore } from './stores/appearance'
 
 const route = useRoute()
+const appearance = useAppearanceStore()
 const showTitlebar = import.meta.env.TAURI_ENV_PLATFORM !== 'mobile'
 
 /** 常驻设置入口：除开机动画外，任何界面都能看到 */
@@ -25,6 +27,14 @@ onMounted(async () => {
   <div class="app-shell">
     <TitleBar v-if="showTitlebar" />
 
+    <!-- 用户上传的背景图（可选） -->
+    <div v-if="appearance.bgImage" class="custom-bg" aria-hidden="true" />
+
+    <!-- 皮肤氛围层：提瓦特天空 / 星穹银河 / 新艾利都霓虹 -->
+    <div class="skin-aura" aria-hidden="true">
+      <div class="aura-glow" />
+    </div>
+
     <main class="app-main">
       <RouterView v-slot="{ Component }">
         <Transition name="route" mode="out-in">
@@ -32,6 +42,9 @@ onMounted(async () => {
         </Transition>
       </RouterView>
     </main>
+
+    <!-- 噪点质感层：绝区零最明显，其余皮肤极淡 -->
+    <div class="texture-overlay" aria-hidden="true" />
 
     <!-- 常驻设置入口（右下角悬浮齿轮） -->
     <Transition name="gear">
