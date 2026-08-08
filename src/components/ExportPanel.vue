@@ -43,13 +43,21 @@ async function doExport() {
   message.value = ''
   try {
     if (activeTab.value === 'doc') {
+      // 批量导出必须逐章取正文。
+      // 旧实现把每一章的 html 都写成 editorStore.content ——
+      // 结果导出十章得到十份当前章，这是个静默的数据错误。
+      const pid = projectStore.currentProjectId
+      const contents = pid ? await projectStore.readProjectContents(pid) : []
+      const contentMap = new Map(contents.map((c) => [c.id, c.content]))
+
       const docs: ExportDoc[] = projectStore.docs
         .filter((d) => selectedIds.value.has(d.id))
         .map((d) => ({
           id: d.id,
           projectName: projectStore.currentProject()?.name || '未命名项目',
           title: d.title,
-          html: editorStore.content,
+          // 当前正在编辑的那一章，用编辑器里的最新内容（可能还没落盘）
+          html: d.id === editorStore.docId ? editorStore.content : contentMap.get(d.id) || '',
           updatedAt: d.updatedAt,
         }))
       const path = await pickExportPath(docs, format.value)
