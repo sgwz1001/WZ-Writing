@@ -12,6 +12,7 @@ import ExportPanel from '../components/ExportPanel.vue'
 import CorrectionPanel from '../components/CorrectionPanel.vue'
 import LexiconPanel from '../components/LexiconPanel.vue'
 import ApiSettingsPanel from '../components/ApiSettingsPanel.vue'
+import TitleSuggestPanel from '../components/TitleSuggestPanel.vue'
 import { useCorrectionStore } from '../stores/correction'
 
 const appearance = useAppearanceStore()
@@ -24,6 +25,7 @@ const newDocTitle = ref('')
 const activeDoc = ref<string | null>(null)
 const showLexicon = ref(false)
 const showApiSettings = ref(false)
+const showTitle = ref(false)
 const identityId = ref(localStorage.getItem('wenzai:last-identity') || 'general')
 
 const identity = getIdentity(identityId.value)
@@ -132,6 +134,7 @@ function cycleSkin() {
       <div v-else class="editor-shell">
         <div class="editor-toolbar">
           <input v-model="editorStore.title" class="doc-title" placeholder="无标题" />
+          <button class="wz-btn wz-btn--ghost wz-btn--sm" @click="showTitle = true">取标题</button>
           <div class="toolbar-tools">
             <button class="wz-btn wz-btn--ghost wz-btn--sm" @click="showLexicon = true">词库</button>
             <button class="wz-btn wz-btn--ghost wz-btn--sm" @click="showApiSettings = true">AI</button>
@@ -157,6 +160,7 @@ function cycleSkin() {
 
     <LexiconPanel v-if="showLexicon" @close="showLexicon = false" />
     <ApiSettingsPanel v-if="showApiSettings" @close="showApiSettings = false" />
+    <TitleSuggestPanel v-if="showTitle" @close="showTitle = false" />
   </div>
 </template>
 
