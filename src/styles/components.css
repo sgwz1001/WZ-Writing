@@ -139,6 +139,13 @@
 }
 
 /* 尺寸变体 */
+.wz-btn--xs {
+  min-height: 24px;
+  padding: 2px var(--space-2);
+  font-size: 11px;
+  border-radius: var(--radius-sm);
+  letter-spacing: 0.02em;
+}
 .wz-btn--sm {
   min-height: 28px;
   padding: var(--space-1) var(--space-3);
@@ -659,5 +666,13 @@ select.wz-input {
   text-decoration-skip-ink: none;
   text-underline-offset: 3px;
   background: color-mix(in srgb, var(--c-warn, #e0a83a) 9%, transparent);
+  border-radius: 2px;
+}
+/* AI 深度纠错建议：紫色点线，与本地红/黄区分 */
+.wz-mark-ai {
+  text-decoration: underline wavy #b07cf5;
+  text-decoration-skip-ink: none;
+  text-underline-offset: 3px;
+  background: color-mix(in srgb, #b07cf5 12%, transparent);
   border-radius: 2px;
 }
