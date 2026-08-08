@@ -33,3 +33,6 @@ Thumbs.db
 # 本地敏感
 .env
 .env.*
+
+# 临时验证/构建目录（本地 NSIS 安装、engine 验证脚本等，不进仓库）
+__verify/
