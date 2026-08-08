@@ -289,3 +289,159 @@ export async function critiquePoem(text: string, formKey: string): Promise<strin
     { temperature: 0.5 },
   )
 }
+
+// ─────────────────────────────────────────────
+//  词牌填词校验
+//  用户选了词牌（如《如梦令》），本地引擎按谱逐句
+//  核对字数 / 平仄（仅 p/z 判错，* 放宽）/ 韵脚。
+// ─────────────────────────────────────────────
+import type { CiPai } from '../data/cipai'
+
+export interface CiCell {
+  ch: string
+  tone: Tone
+  /** 词谱期望：'p' | 'z' | '*' */
+  expect: 'p' | 'z' | '*' | null
+  status: 'ok' | 'bad' | 'unknown' | 'none'
+}
+export interface CiLineResult {
+  raw: string
+  cells: CiCell[]
+  expectedLen: number
+  isRhyme: boolean
+  rhymeChar: string | null
+  rhymeTone: Tone | null
+  rhymeGroup: number | null
+  note: string
+  punct: string
+}
+export interface CiAnalysis {  name: string
+  category: string
+  rhymeType: string
+  sections: { name: string; lines: CiLineResult[] }[]
+  totalExpected: number
+  totalGot: number
+  notes: string[]
+}
+
+/** 词谱符号 → 期望；'*' 可平可仄 */
+function expectOf(t: 'p' | 'z' | '*'): CiCell['expect'] {
+  return t
+}
+
+/**
+ * 按词牌校验一首词。
+ * 输入按行分隔；每阕之间建议空一行（面板按「句」逐个提示，不强制分阕）。
+ */
+export function analyzeCi(text: string, pai: CiPai): CiAnalysis {
+  const rawLines = splitLines(text)
+  // 把词谱压平成一句一串，方便逐句对位
+  const spec: { name: string; sentences: { len: number; tones: string; rhyme: boolean; punct: string }[] }[] =
+    pai.sections.map((sec) => ({
+      name: sec.name,
+      sentences: sec.sentences.map((st) => ({
+        len: st.len,
+        tones: st.tones.join(''),
+        rhyme: st.rhyme,
+        punct: st.punct,
+      })),
+    }))
+
+  const notes: string[] = []
+
+  if (!rawLines.length) {
+    notes.push('请输入至少一句。')
+    return {
+      name: pai.name,
+      category: pai.category,
+      rhymeType: pai.rhymeType,
+      sections: spec.map((s) => ({ name: s.name, lines: [] })),
+      totalExpected: pai.totalChars,
+      totalGot: 0,
+      notes,
+    }
+  }
+
+  if (rawLines.length !== pai.totalChars && rawLines.length !== spec.reduce((s, x) => s + x.sentences.length, 0)) {
+    // 只提示句数，不强行要求恰好（用户可能一句一行，也可能按字数拆行）
+    const expectLines = spec.reduce((s, x) => s + x.sentences.length, 0)
+    notes.push(
+      rawLines.length > expectLines
+        ? `句数 ${rawLines.length} 多于词谱 ${expectLines} 句 —— 若是一句拆成两行输入，可合并。`
+        : `句数 ${rawLines.length} 少于词谱 ${expectLines} 句。`,
+    )
+  }
+
+  // 逐句对位（支持用户在阕间空行 —— 已由 splitLines 抹平，这里连续对位）
+  const allSpec = spec.flatMap((s) => s.sentences.map((st, si) => ({ sec: s.name, ...st, si })))
+  let li = 0
+  const sections: CiAnalysis['sections'] = []
+  let cur: CiAnalysis['sections'][number] | null = null
+
+  for (const sp of allSpec) {
+    const raw = rawLines[li] || ''
+    const chars = [...raw]
+    li++
+
+    if (!cur || cur.name !== sp.sec) {
+      cur = { name: sp.sec, lines: [] }
+      sections.push(cur)
+    }
+
+    const cells: CiCell[] = chars.map((ch, j) => {
+      const tone = toneOf(ch)
+      const expect = j < sp.tones.length ? (expectOf(sp.tones[j] as 'p' | 'z' | '*')) : null
+      let status: CiCell['status'] = 'none'
+      if (expect) {
+        if (expect === '*') status = 'ok'
+        else if (tone === '?') status = 'unknown'
+        else status = tone === (expect === 'p' ? '平' : '仄') ? 'ok' : 'bad'
+      }
+      return { ch, tone, expect, status }
+    })
+
+    let note = ''
+    if (chars.length !== sp.len) {
+      note = `本句 ${chars.length} 字，词谱应 ${sp.len} 字。`
+    }
+
+    const rhymeChar = sp.rhyme && chars.length ? chars[chars.length - 1] : null
+    const rhymeTone = rhymeChar ? toneOf(rhymeChar) : null
+    const rhymeGroup = rhymeChar ? RHYME[rhymeChar] ?? null : null
+
+    cur.lines.push({
+      raw,
+      cells,
+      expectedLen: sp.len,
+      isRhyme: sp.rhyme,
+      rhymeChar,
+      rhymeTone,
+      rhymeGroup,
+      note,
+      punct: sp.punct,
+    })
+  }
+
+  // 韵脚一致性：同一韵部（宽松 —— 平水韵 / 词林正韵未细分，只查同韵大组）
+  const feet = sections.flatMap((s) => s.lines).filter((l) => l.isRhyme && l.rhymeChar)
+  const groups = feet.map((f) => f.rhymeGroup).filter((g): g is number => g != null)
+  const first = groups[0]
+  const diff = feet.filter((f) => f.rhymeGroup != null && first != null && f.rhymeGroup !== first)
+  const unknown = feet.filter((f) => f.rhymeGroup == null)
+  if (diff.length) notes.push(`韵脚「${diff.map((f) => f.rhymeChar).join('、')}」与首韵部不同。`)
+  if (unknown.length) notes.push(`韵脚「${unknown.map((f) => f.rhymeChar).join('、')}」字表未收录，建议人工核对。`)
+  if (!diff.length && !unknown.length && feet.length) notes.push('韵脚同部，未见冲突。')
+  if (feet.length && !diff.length && feet.some((f) => f.rhymeTone === '仄') && pai.rhymeType.includes('平韵')) {
+    notes.push(`注意：本词牌要求「${pai.rhymeType}」，但有仄声韵脚（${feet.filter((f) => f.rhymeTone === '仄').map((f) => f.rhymeChar).join('、')}）。`)
+  }
+
+  return {
+    name: pai.name,
+    category: pai.category,
+    rhymeType: pai.rhymeType,
+    sections,
+    totalExpected: pai.totalChars,
+    totalGot: rawLines.reduce((s, l) => s + [...l].length, 0),
+    notes,
+  }
+}
