@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow'
 import { useAppearanceStore } from '../stores/appearance'
 import { useProjectStore } from '../stores/project'
 import { useEditorStore } from '../stores/editor'
 import { getIdentity } from '../data/wendao-lineage'
+import { numberToChinese } from '../utils/text'
 import Editor from '../components/Editor.vue'
 import WordCountPanel from '../components/WordCountPanel.vue'
 import FormatSplitPanel from '../components/FormatSplitPanel.vue'
@@ -23,6 +24,7 @@ const editorStore = useEditorStore()
 const correctionStore = useCorrectionStore()
 
 const newProjectName = ref('')
+const showNewProject = ref(false)
 const newDocTitle = ref('')
 const activeDoc = ref<string | null>(null)
 const showLexicon = ref(false)
@@ -44,16 +46,36 @@ onMounted(async () => {
   correctionStore.refreshAll()
 })
 
+const newProjectInput = ref<HTMLInputElement | null>(null)
+
+// 弹窗一出现就把光标放进输入框，少点一次鼠标
+watch(showNewProject, async (open) => {
+  if (open) {
+    await nextTick()
+    newProjectInput.value?.focus()
+  } else {
+    newProjectName.value = ''
+  }
+})
+
 async function createProject() {
   if (!newProjectName.value.trim()) return
   await projectStore.createProject(newProjectName.value, identityId.value)
   newProjectName.value = ''
+  showNewProject.value = false
 }
+
+/** 章节自动编号：当前项目已有 N 篇章节，则新章节默认「第 N+1 章」 */
+const suggestedChapter = computed(() => {
+  const n = projectStore.docs.filter((d) => d.kind === 'chapter').length + 1
+  return `第${numberToChinese(n)}章`
+})
 
 async function createDoc() {
   const pid = projectStore.currentProjectId
-  if (!pid || !newDocTitle.value.trim()) return
-  const doc = await projectStore.createDoc(pid, newDocTitle.value)
+  if (!pid) return
+  const title = newDocTitle.value.trim() || suggestedChapter.value
+  const doc = await projectStore.createDoc(pid, title)
   activeDoc.value = doc.id
   editorStore.open(doc.id, pid, doc.title)
   newDocTitle.value = ''
@@ -84,13 +106,7 @@ function cycleSkin() {
         </div>
 
         <div class="project-actions">
-          <input
-            v-model="newProjectName"
-            class="wz-input"
-            placeholder="新建项目名"
-            @keyup.enter="createProject"
-          />
-          <button class="wz-btn wz-btn--primary wz-btn--sm" @click="createProject">+ 项目</button>
+          <button class="wz-btn wz-btn--primary wz-btn--sm" @click="showNewProject = true">+ 新建项目</button>
         </div>
       </div>
 
@@ -128,7 +144,7 @@ function cycleSkin() {
           <input
             v-model="newDocTitle"
             class="wz-input"
-            placeholder="章节标题"
+            :placeholder="suggestedChapter"
             @keyup.enter="createDoc"
           />
           <button class="wz-btn wz-btn--primary" @click="createDoc">+ 新建章节</button>
@@ -169,6 +185,39 @@ function cycleSkin() {
     <TitleSuggestPanel v-if="showTitle" @close="showTitle = false" />
     <WeChatPanel v-if="showWeChat" @close="showWeChat = false" />
     <PoetryPanel v-if="showPoetry" @close="showPoetry = false" />
+
+    <Teleport to="body">
+      <div
+        v-if="showNewProject"
+        class="wz-overlay"
+        @click.self="showNewProject = false"
+        @keyup.esc="showNewProject = false"
+      >
+        <div class="wz-modal">
+          <div class="wz-modal__head">
+            <h3>新建项目</h3>
+            <button class="wz-icon-btn" title="关闭" @click="showNewProject = false">×</button>
+          </div>
+          <div class="wz-modal__body">
+            <p class="modal-hint">请输入项目名或书名：</p>
+            <input
+              ref="newProjectInput"
+              v-model="newProjectName"
+              class="wz-input"
+              placeholder="例如：长篇连载《星海》"
+              @keyup.enter="createProject"
+              @keyup.esc="showNewProject = false"
+            />
+          </div>
+          <div class="wz-modal__actions">
+            <button class="wz-btn wz-btn--ghost" @click="showNewProject = false">取消</button>
+            <button class="wz-btn wz-btn--primary" :disabled="!newProjectName.trim()" @click="createProject">
+              创建
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -298,6 +347,16 @@ function cycleSkin() {
 
 .quick-create {
   justify-content: center;
+}
+
+.modal-hint {
+  margin: 0;
+  font-size: 13px;
+  color: var(--c-text-secondary);
+}
+
+.modal-hint + .wz-input {
+  margin-top: var(--space-3);
 }
 
 .editor-shell {

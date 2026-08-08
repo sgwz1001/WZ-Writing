@@ -55,7 +55,12 @@ function enterStudio() {
       </div>
       <p class="panel-explain">{{ getIdentity(selected).maxim.gloss }}</p>
       <p class="panel-affinity">{{ getIdentity(selected).maxim.affinity }}</p>
-      <button class="wz-btn wz-btn--primary" @click="enterStudio">进入工作室</button>
+    </div>
+
+    <div class="identity-actions">
+      <button class="wz-btn wz-btn--primary wz-btn--lg enter-btn" @click="enterStudio">
+        进入工作室 · {{ getIdentity(selected).name }}
+      </button>
     </div>
   </div>
 </template>
@@ -261,6 +266,24 @@ function enterStudio() {
   color: var(--c-text-tertiary);
   font-size: 13px;
   line-height: 1.7;
+}
+
+/* 进入按钮置底常驻操作条：滚动时也始终可见、醒目 */
+.identity-actions {
+  position: sticky;
+  bottom: 0;
+  margin-top: var(--space-2);
+  padding: var(--space-4) 0 var(--space-2);
+  display: flex;
+  justify-content: center;
+  background: linear-gradient(to top, var(--c-bg-base) 55%, transparent);
+  z-index: var(--z-sticky);
+}
+
+.enter-btn {
+  min-width: 280px;
+  letter-spacing: 0.04em;
+  box-shadow: 0 0 0 1px var(--c-accent-soft), 0 0 26px var(--c-accent-soft);
 }
 
 /* 进入按钮已统一为 .wz-btn .wz-btn--primary（见 components.css），不再重复定义。 */

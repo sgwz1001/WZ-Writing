@@ -92,11 +92,13 @@ export function plainTextToMarkdown(text: string, title?: string): string {
 export function computeStats(html: string, title = ''): TextStats {
   const plain = htmlToPlainText(html)
   const titleChars = countCjkAndWords(title)
-  const totalChars = countCjkAndWords(plain) + titleChars
+  const bodyChars = countCjkAndWords(plain)
   const punctCount = countPunctuation(plain)
-  const charsNoPunct = Math.max(0, countCjkAndWords(removePunctuation(plain)) + titleChars)
-  const charsNoTitle = countCjkAndWords(plain)
-  const charsNoPunctNoTitle = Math.max(0, countCjkAndWords(removePunctuation(plain)))
+  // 标点默认不计入字数；开启「计入标点」时把标点数量并进总数。
+  const totalChars = bodyChars + titleChars + punctCount
+  const charsNoPunct = Math.max(0, bodyChars + titleChars)
+  const charsNoTitle = bodyChars + punctCount
+  const charsNoPunctNoTitle = bodyChars
 
   return {
     totalChars,
@@ -112,6 +114,33 @@ export function computeStats(html: string, title = ''): TextStats {
   }
 }
 
+/**
+ * 阿拉伯数字转中文序号（用于章节自动编号：第N章）。
+ * 支持 1 ~ 999；超出范围回落为原数字字符串。
+ */
+export function numberToChinese(n: number): string {
+  if (!Number.isFinite(n) || n < 1) return String(n)
+  if (n > 999) return String(n)
+  const digits = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九']
+  const units = ['', '十', '百']
+  let s = ''
+  const str = String(n)
+  for (let i = 0; i < str.length; i++) {
+    const d = Number(str[i])
+    const pos = str.length - 1 - i
+    if (d === 0) {
+      // 连续的零只保留一个，且末位零不写
+      if (s && !s.endsWith('零')) s += '零'
+    } else {
+      s += digits[d] + units[pos]
+    }
+  }
+  s = s.replace(/零+$/, '')
+  // 十位为 1 时，「一十」读作「十」（如 15 → 十五）
+  s = s.replace(/^一十/, '十')
+  return s
+}
+
 function countCjkAndWords(text: string): number {
   if (!text) return 0
   // CJK 统一表意文字 + 扩展 A/B/C/D/E/F，以及谚文、假名
@@ -124,10 +153,6 @@ function countCjkAndWords(text: string): number {
 
 function countPunctuation(text: string): number {
   return (text.match(CJK_PUNCT) || []).length + (text.match(WESTERN_PUNCT) || []).length
-}
-
-function removePunctuation(text: string): string {
-  return text.replace(CJK_PUNCT, '').replace(WESTERN_PUNCT, '')
 }
 
 /**

@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useEditorStore } from '../stores/editor'
+import { useLoadingStore } from '../stores/loading'
 import { TITLE_STYLES, type TitleStyle, suggestTitles } from '../utils/title'
 
 const emit = defineEmits<{ (e: 'close'): void }>()
 
 const editor = useEditorStore()
+const loadingStore = useLoadingStore()
 
 const style = ref<TitleStyle>('webnovel')
 const loading = ref(false)
@@ -17,7 +19,9 @@ async function generate() {
   error.value = ''
   candidates.value = []
   try {
-    candidates.value = await suggestTitles(editor.content, style.value, 5)
+    candidates.value = await loadingStore.wrap('AI 正在推敲标题…', () =>
+      suggestTitles(editor.content, style.value, 5),
+    )
   } catch (e) {
     error.value = e instanceof Error ? e.message : String(e)
   } finally {

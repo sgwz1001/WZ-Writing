@@ -18,9 +18,9 @@ export const useEditorStore = defineStore('editor', () => {
   const countPunctuation = ref(false)
   const countTitle = ref(true)
 
-  const stats = computed<TextStats>(() => {
-    return computeStats(content.value, countTitle.value ? title.value : '')
-  })
+  // 始终按「含标题」口径算一次，四种组合都由 computeStats 一并给出；
+  // 开关只负责从中挑一个显示，避免对照表随开关一起变动导致数字对不上。
+  const stats = computed<TextStats>(() => computeStats(content.value, title.value))
 
   const displayCharCount = computed(() => {
     if (countPunctuation.value && countTitle.value) return stats.value.totalChars

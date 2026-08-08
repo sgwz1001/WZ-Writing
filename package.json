@@ -1,7 +1,7 @@
 {
   "name": "wenzai",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.3.0",
   "type": "module",
   "description": "文载 Writing —— 面向中文写作者的本地优先写作工作台",
   "scripts": {
@@ -11,7 +11,8 @@
     "tauri": "tauri",
     "app:dev": "tauri dev",
     "app:build": "tauri build",
-    "typecheck": "vue-tsc --noEmit"
+    "typecheck": "vue-tsc --noEmit",
+    "selftest": "esbuild scripts/selftest-stats.ts --bundle --platform=node --format=cjs --outfile=__verify/selftest.cjs --log-level=warning && node __verify/selftest.cjs"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.11.1",

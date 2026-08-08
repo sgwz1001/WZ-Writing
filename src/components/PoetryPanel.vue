@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useEditorStore } from '../stores/editor'
+import { useLoadingStore } from '../stores/loading'
 import { htmlToPlainText } from '../utils/text'
 import { analyzePoem, critiquePoem, POEM_FORMS } from '../utils/poetry'
 import type { PoemAnalysis, CharCell } from '../utils/poetry'
 
 const emit = defineEmits<{ (e: 'close'): void }>()
 const editor = useEditorStore()
+const loadingStore = useLoadingStore()
 
 const poemText = ref(htmlToPlainText(editor.content).split('\n\n').join('\n').trim())
 const formKey = ref(POEM_FORMS[0].key)
@@ -35,7 +37,9 @@ async function doCritique() {
   critique.value = ''
   critiqueError.value = ''
   try {
-    critique.value = await critiquePoem(poemText.value, formKey.value)
+    critique.value = await loadingStore.wrap('AI 正在品评格律…', () =>
+      critiquePoem(poemText.value, formKey.value),
+    )
   } catch (e) {
     critiqueError.value = e instanceof Error ? e.message : String(e)
   } finally {

@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { onMounted, ref, watch } from 'vue'
 import { useSettingsStore } from '../stores/settings'
+import { useLoadingStore } from '../stores/loading'
 import { PROVIDERS, getProvider, getDefaultBase, getDefaultModel } from '../data/models'
 import { testConnection } from '../utils/ai'
 
 const emit = defineEmits<{ (e: 'close'): void }>()
 const settings = useSettingsStore()
+const loadingStore = useLoadingStore()
 
 const provider = ref(settings.ai.provider)
 const baseUrl = ref(settings.ai.baseUrl)
@@ -46,7 +48,7 @@ async function runTest() {
   testing.value = true
   testMsg.value = ''
   try {
-    const r = await testConnection()
+    const r = await loadingStore.wrap('正在连接模型服务…', () => testConnection())
     testMsg.value = '连接成功 ✓ ' + r
   } catch (e) {
     testMsg.value = '连接失败：' + (e as Error).message

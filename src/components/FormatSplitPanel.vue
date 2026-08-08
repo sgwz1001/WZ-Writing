@@ -38,8 +38,8 @@ function cancel() {
         <div class="wz-modal__body">
           <div class="slider-wrap">
             <div class="slider-labels">
-              <span>激进（更碎）</span>
               <span>保守（更长）</span>
+              <span>激进（更碎）</span>
             </div>
             <input
               v-model.number="level"
@@ -51,7 +51,7 @@ function cancel() {
               :style="{ '--_fill': level + '%' }"
               @input="updatePreview"
             />
-            <p class="slider-hint">越靠左，分词越激进、段落越细碎；越靠右越保守、段落越长。</p>
+            <p class="slider-hint">越靠左越保守、段落越长；越靠右越激进、段落越细碎。</p>
           </div>
 
           <div class="preview">

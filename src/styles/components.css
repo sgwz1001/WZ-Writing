@@ -629,6 +629,19 @@ select.wz-input {
   }
 }
 
+/* ══════════════════════════════════════════════
+   动画总开关：关闭后禁用全部过渡/动画，仅保留必要淡入
+   （由 appearance.setAnimations 写入 <html data-anim="off">）
+   ══════════════════════════════════════════════ */
+[data-anim='off'] *,
+[data-anim='off'] *::before,
+[data-anim='off'] *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+
 /* ─────────────────────────────────────────────
    编辑器纠错标注（波浪线）
    error = 红（硬伤：错词/错别字）  warn = 黄（标点/格式）

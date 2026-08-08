@@ -14,11 +14,20 @@ export const useAppearanceStore = defineStore('appearance', () => {
   const bgImage = ref<string | null>(localStorage.getItem('wenzai:bg-image'))
   const customFont = ref<string | null>(localStorage.getItem('wenzai:font'))
   const reduceMotion = ref<boolean>(localStorage.getItem('wenzai:reduce-motion') === 'true')
+  // 动画总开关：默认开启；关闭后全局动效关闭（含转场/加载/脉冲，仅保留必要淡入）。
+  const animations = ref<boolean>(localStorage.getItem('wenzai:animations') !== 'false')
 
   function applyAttrs() {
     document.documentElement.setAttribute('data-skin', skin.value)
     document.documentElement.setAttribute('data-mode', mode.value)
+    document.documentElement.setAttribute('data-anim', animations.value ? 'on' : 'off')
     document.documentElement.style.setProperty('--user-blur', `${blur.value}px`)
+  }
+
+  function setAnimations(next: boolean) {
+    animations.value = next
+    localStorage.setItem('wenzai:animations', String(next))
+    applyAttrs()
   }
 
   function setSkin(next: Skin) {
@@ -52,9 +61,11 @@ export const useAppearanceStore = defineStore('appearance', () => {
     bgImage,
     customFont,
     reduceMotion,
+    animations,
     setSkin,
     setMode,
     toggleMode,
     setBlur,
+    setAnimations,
   }
 })

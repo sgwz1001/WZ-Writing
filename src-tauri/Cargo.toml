@@ -1,6 +1,6 @@
 [package]
 name = "wenzai"
-version = "0.2.0"
+version = "0.3.0"
 description = "文载 Writing —— 面向中文写作者的本地优先写作工作台"
 authors = ["sgwz1001"]
 edition = "2021"
