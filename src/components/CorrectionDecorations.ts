@@ -49,6 +49,20 @@ function buildDecorations(doc: PMNode): BuildResult {
   const isFree = (from: number, to: number) =>
     !used.some(([s, e]) => from < e && s < to)
 
+  // 深度纠错建议先占位（AI 结果用紫色点线，与本地红/黄区分）
+  const deepIssues = store.deepIssues
+  for (const di of deepIssues) {
+    if (!isFree(di.from, di.to)) continue
+    used.push([di.from, di.to])
+    decorations.push(
+      Decoration.inline(di.from, di.to, {
+        class: 'wz-mark-ai',
+        'data-category': di.category,
+        title: di.reason,
+      }),
+    )
+  }
+
   doc.descendants((node, pos) => {
     if (!node.isText || !node.text) return
     const text = node.text
