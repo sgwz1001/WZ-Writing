@@ -25,6 +25,7 @@ export type IdentityId =
   | 'editor'
   | 'essayist'
   | 'screenwriter'
+  | 'planner'
 
 export interface Maxim {
   /** 题于界面的短句，取原文中最凝练的一段 */
@@ -253,10 +254,43 @@ export const IDENTITIES: readonly Identity[] = [
     modules: ['editor', 'autosave', 'proofread', 'script-format'],
     preferredSkin: 'zenless',
   },
+
+  {
+    id: 'planner',
+    name: '策划',
+    icon: '💡',
+    tagline: '文案、品牌与产品策划',
+    maxim: {
+      text: '课虚无以责有，叩寂寞而求音',
+      source:
+        '其始也，皆收视反听，耽思傍讯，精骛八极，心游万仞。……课虚无以责有，叩寂寞而求音。函绵邈于尺素，吐滂沛乎寸心。',
+      work: '《文赋》',
+      author: '陆机',
+      dynasty: '西晋',
+      lifespan: '261—303',
+      gloss:
+        '向虚无索要实有，朝寂静叩问声音。把绵长悠远收进一张尺素，让浩荡奔涌吐自方寸之心。',
+      affinity:
+        '《文赋》是中国第一篇系统讲创作过程的文论。这十个字写尽策划的处境 —— 别人给你的只有一句空要求，你要从无中拿出有，从没人说话的地方造出声音。',
+    },
+    modules: ['editor', 'autosave', 'proofread', 'titling', 'brief'],
+    preferredSkin: 'zenless',
+  },
 ] as const
 
 /** 按 id 取身份，未命中则回退到通用 */
-export const IDENTITY_ORDER: readonly IdentityId[] = ['general', 'webnovel', 'poet', 'official', 'scholar', 'nonfiction', 'editor', 'essayist', 'screenwriter'] as const
+export const IDENTITY_ORDER: readonly IdentityId[] = [
+  'general',
+  'webnovel',
+  'poet',
+  'official',
+  'scholar',
+  'nonfiction',
+  'editor',
+  'essayist',
+  'screenwriter',
+  'planner',
+] as const
 
 export function getIdentity(id: IdentityId | string | null | undefined): Identity {
   return IDENTITIES.find((i) => i.id === id) ?? IDENTITIES[0]
