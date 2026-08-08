@@ -94,29 +94,34 @@ const loading = useLoadingStore()
   animation: wz-pulse 1.4s var(--ease-out) infinite;
 }
 
+/* 绝区零：硬边方框 + 平滑霓虹呼吸。
+   ⚠️ 这里曾用 steps(2) 硬切透明度 + steps(8) 跳帧旋转，
+   在高刷屏上表现为「整页中高频频闪」，已改为连续缓动。 */
 [data-skin='zenless'] .wz-spinner {
   border-radius: var(--radius-sm);
-  animation: wz-spin 0.7s steps(8) infinite;
+  animation: wz-spin 1.15s cubic-bezier(0.65, 0, 0.35, 1) infinite;
 }
 [data-skin='zenless'] .wz-spinner::before {
   border-radius: var(--radius-sm);
   border: 2px solid var(--c-accent);
   border-right-color: transparent;
   border-bottom-color: transparent;
-  box-shadow: 0 0 16px var(--c-accent);
-  animation: wz-flicker 0.9s steps(2) infinite;
+  box-shadow: 0 0 16px var(--c-accent-soft);
+  animation: wz-neon 1.8s var(--ease-out) infinite;
 }
 [data-skin='zenless'] .spinner-core {
   border-radius: 2px;
+  animation: wz-neon 1.8s var(--ease-out) infinite reverse;
 }
 
 @keyframes wz-pulse {
   0%, 100% { transform: scale(1); opacity: 1; }
   50% { transform: scale(1.5); opacity: 0.6; }
 }
-@keyframes wz-flicker {
+/* 平滑霓虹呼吸：最低不透明度 0.72，肉眼只觉得在「呼吸」，不会读成闪烁 */
+@keyframes wz-neon {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.35; }
+  50% { opacity: 0.72; }
 }
 
 /* 转场淡入淡出 */
