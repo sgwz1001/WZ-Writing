@@ -189,7 +189,8 @@ function repeatedPunct(text: string): TextIssue[] {
 
 function cjkSpaces(text: string): TextIssue[] {
   const out: TextIssue[] = []
-  const re = /([\u3400-\u9FFF\uF900-\uFAFF])\s+([\u3400-\u9FFF\uF900-\uFAFF])/g
+  // 只匹配真正的空格（半角空格 / 全角空格），绝不匹配换行，否则会吞掉段落分隔
+  const re = /([\u3400-\u9FFF\uF900-\uFAFF])[ \u3000]+([\u3400-\u9FFF\uF900-\uFAFF])/g
   let m: RegExpExecArray | null
   while ((m = re.exec(text))) {
     const idx = m.index
@@ -238,7 +239,12 @@ function runLocalRules(text: string): TextIssue[] {
     const ch = text[i]
     const code = ch.charCodeAt(0)
 
-    if (code >= 0xff01 && code <= 0xff5e) {
+    // 只把「全角字母 / 数字」判为需转半角；全角标点（。，！？等）在中文里本就正确，绝不标记
+    const isFullWidthAlphaNum =
+      (code >= 0xff10 && code <= 0xff19) || // ０-９
+      (code >= 0xff21 && code <= 0xff3a) || // Ａ-Ｚ
+      (code >= 0xff41 && code <= 0xff5a) // ａ-ｚ
+    if (isFullWidthAlphaNum) {
       const half = String.fromCharCode(code - 0xfee0)
       out.push({
         index: i,
@@ -246,7 +252,7 @@ function runLocalRules(text: string): TextIssue[] {
         original: ch,
         revised: half,
         category: '全/半角',
-        reason: `全角字符「${ch}」建议改为半角「${half}」`,
+        reason: `全角字母/数字「${ch}」建议改为半角「${half}」`,
         severity: 'warn',
       })
       continue
@@ -291,7 +297,7 @@ function runLocalRules(text: string): TextIssue[] {
 export function findTextIssues(text: string, ctx: CorrectionContext): TextIssue[] {
   const issues: TextIssue[] = []
 
-  // 白名单保护区间（专有名词不允许被改）
+  // 白名单保护区间（专有名词不允许被改）—— 对所有检测类型统一生效
   const protectedRanges: Array<[number, number]> = []
   for (const t of ctx.whitelistTerms) {
     if (!t) continue
@@ -305,20 +311,19 @@ export function findTextIssues(text: string, ctx: CorrectionContext): TextIssue[
     protectedRanges.some(([s, e]) => i < e && s < i + len)
 
   if (ctx.lexiconOn) {
-    const lex = scanLexicon(text, ctx.lexiconMap)
-    for (const it of lex) {
-      if (overlapsProtected(it.index, it.length)) continue
-      issues.push(it)
-    }
+    issues.push(...scanLexicon(text, ctx.lexiconMap))
   }
   if (ctx.rulesOn) {
     issues.push(...runLocalRules(text))
   }
 
+  // 统一过滤掉落在白名单保护区间内的命中（错词库 + 内置错别字都受保护）
+  const filtered = issues.filter((it) => !overlapsProtected(it.index, it.length))
+
   // error 优先，其次按出现顺序 —— 决定重叠时保留哪一条
-  issues.sort((a, b) => {
+  filtered.sort((a, b) => {
     if (a.severity !== b.severity) return a.severity === 'error' ? -1 : 1
     return a.index - b.index
   })
-  return issues
+  return filtered
 }

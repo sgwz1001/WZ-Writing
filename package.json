@@ -1,7 +1,7 @@
 {
   "name": "wenzai",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "description": "文载 Writing —— 面向中文写作者的本地优先写作工作台",
   "scripts": {
