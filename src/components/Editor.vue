@@ -5,8 +5,12 @@ import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import CharacterCount from '@tiptap/extension-character-count'
 import { useEditorStore } from '../stores/editor'
+import { useCorrectionStore } from '../stores/correction'
+import { editorRef } from '../stores/editorRef'
+import { CorrectionDecorations } from './CorrectionDecorations'
 
 const editorStore = useEditorStore()
+const correctionStore = useCorrectionStore()
 
 const editor = useEditor({
   extensions: [
@@ -22,6 +26,8 @@ const editor = useEditor({
     CharacterCount.configure({
       mode: 'textSize',
     }),
+    // 实时纠错波浪线（不改字，只标注）
+    CorrectionDecorations,
   ],
   content: editorStore.content,
   autofocus: 'end',
@@ -37,6 +43,31 @@ const editor = useEditor({
   },
 })
 
+// 把编辑器实例交给全局引用，供「应用纠正」等动作调用
+watch(
+  editor,
+  (ed) => {
+    editorRef.value = ed ?? null
+  },
+  { immediate: true },
+)
+
+// 词库 / 规则开关变化时，强制重建装饰（无需改动文档）
+watch(
+  [
+    () => correctionStore.lexiconMap,
+    () => correctionStore.whitelistTerms,
+    () => correctionStore.rulesOn,
+    () => correctionStore.lexiconOn,
+  ],
+  () => {
+    const ed = editor.value
+    if (ed && !ed.isDestroyed) {
+      ed.view.dispatch(ed.state.tr.setMeta('forceCorrection', true))
+    }
+  },
+)
+
 // 当 store 中内容变化（如恢复历史版本）时同步到编辑器
 watch(
   () => editorStore.content,
@@ -51,6 +82,7 @@ watch(
 
 onBeforeUnmount(() => {
   editor.value?.destroy()
+  editorRef.value = null
 })
 </script>
 

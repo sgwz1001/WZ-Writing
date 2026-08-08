@@ -10,7 +10,8 @@ import { save, open } from '@tauri-apps/plugin-dialog'
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } from 'docx'
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore —— write-excel-file 无类型声明，由 src/types/vendor.d.ts 兜底
-import writeXlsxFile from 'write-excel-file'
+// v4 起移除了裸 "." 导出，浏览器环境须走 /browser 子路径
+import writeXlsxFile from 'write-excel-file/browser'
 import { htmlToPlainText, plainTextToMarkdown } from './text'
 
 export type ExportFormat = 'txt' | 'md' | 'html' | 'docx' | 'csv' | 'xlsx' | 'pdf'

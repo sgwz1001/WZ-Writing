@@ -349,6 +349,87 @@ pub fn set_settings(state: State<'_, AppState>, pairs: Vec<SettingPair>) -> AppR
 }
 
 // ─────────────────────────────────────────────
+//  错词库 / 白名单
+// ─────────────────────────────────────────────
+
+#[tauri::command]
+pub fn list_lexicon(
+    state: State<'_, AppState>,
+    enabled_only: bool,
+) -> AppResult<Vec<db::LexiconEntry>> {
+    let conn = state.conn.lock();
+    db::list_lexicon(&conn, enabled_only)
+}
+
+#[tauri::command]
+pub fn add_lexicon(
+    state: State<'_, AppState>,
+    wrong: String,
+    right: String,
+    category: Option<String>,
+    note: Option<String>,
+) -> AppResult<()> {
+    let conn = state.conn.lock();
+    db::add_lexicon(
+        &conn,
+        &wrong,
+        &right,
+        &category.unwrap_or_else(|| "custom".into()),
+        &note.unwrap_or_default(),
+    )
+}
+
+#[tauri::command]
+pub fn set_lexicon_enabled(state: State<'_, AppState>, id: String, enabled: bool) -> AppResult<()> {
+    let conn = state.conn.lock();
+    db::set_lexicon_enabled(&conn, &id, enabled)
+}
+
+#[tauri::command]
+pub fn remove_lexicon(state: State<'_, AppState>, id: String) -> AppResult<()> {
+    let conn = state.conn.lock();
+    db::remove_lexicon(&conn, &id)
+}
+
+#[tauri::command]
+pub fn import_lexicon(
+    state: State<'_, AppState>,
+    entries: Vec<db::LexiconInput>,
+) -> AppResult<usize> {
+    let conn = state.conn.lock();
+    db::import_lexicon(&conn, &entries)
+}
+
+#[tauri::command]
+pub fn get_lexicon_map(state: State<'_, AppState>) -> AppResult<Vec<(String, String)>> {
+    let conn = state.conn.lock();
+    db::lexicon_map(&conn)
+}
+
+#[tauri::command]
+pub fn add_whitelist(
+    state: State<'_, AppState>,
+    term: String,
+    project_id: Option<String>,
+    note: Option<String>,
+) -> AppResult<()> {
+    let conn = state.conn.lock();
+    db::add_whitelist(&conn, &term, project_id.as_deref(), &note.unwrap_or_default())
+}
+
+#[tauri::command]
+pub fn remove_whitelist(state: State<'_, AppState>, id: String) -> AppResult<()> {
+    let conn = state.conn.lock();
+    db::remove_whitelist(&conn, &id)
+}
+
+#[tauri::command]
+pub fn list_whitelist(state: State<'_, AppState>) -> AppResult<Vec<db::WhitelistEntry>> {
+    let conn = state.conn.lock();
+    db::list_whitelist(&conn)
+}
+
+// ─────────────────────────────────────────────
 //  路径与环境
 // ─────────────────────────────────────────────
 

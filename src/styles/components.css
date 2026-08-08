@@ -628,3 +628,23 @@ select.wz-input {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ─────────────────────────────────────────────
+   编辑器纠错标注（波浪线）
+   error = 红（硬伤：错词/错别字）  warn = 黄（标点/格式）
+   只动颜色与下划线，绝不动布局
+   ───────────────────────────────────────────── */
+.wz-mark-error {
+  text-decoration: underline wavy var(--c-error, #ff5a5a);
+  text-decoration-skip-ink: none;
+  text-underline-offset: 3px;
+  background: color-mix(in srgb, var(--c-error, #ff5a5a) 10%, transparent);
+  border-radius: 2px;
+}
+.wz-mark-warn {
+  text-decoration: underline dotted var(--c-warn, #e0a83a);
+  text-decoration-skip-ink: none;
+  text-underline-offset: 3px;
+  background: color-mix(in srgb, var(--c-warn, #e0a83a) 9%, transparent);
+  border-radius: 2px;
+}

@@ -9,14 +9,21 @@ import Editor from '../components/Editor.vue'
 import WordCountPanel from '../components/WordCountPanel.vue'
 import FormatSplitPanel from '../components/FormatSplitPanel.vue'
 import ExportPanel from '../components/ExportPanel.vue'
+import CorrectionPanel from '../components/CorrectionPanel.vue'
+import LexiconPanel from '../components/LexiconPanel.vue'
+import ApiSettingsPanel from '../components/ApiSettingsPanel.vue'
+import { useCorrectionStore } from '../stores/correction'
 
 const appearance = useAppearanceStore()
 const projectStore = useProjectStore()
 const editorStore = useEditorStore()
+const correctionStore = useCorrectionStore()
 
 const newProjectName = ref('')
 const newDocTitle = ref('')
 const activeDoc = ref<string | null>(null)
+const showLexicon = ref(false)
+const showApiSettings = ref(false)
 const identityId = ref(localStorage.getItem('wenzai:last-identity') || 'general')
 
 const identity = getIdentity(identityId.value)
@@ -27,6 +34,8 @@ if (identity.preferredSkin) {
 onMounted(async () => {
   await getCurrentWebviewWindow().show()
   await projectStore.loadProjects()
+  // 预载错词库 / 白名单，供编辑器实时标红使用
+  correctionStore.refreshAll()
 })
 
 async function createProject() {
@@ -124,6 +133,8 @@ function cycleSkin() {
         <div class="editor-toolbar">
           <input v-model="editorStore.title" class="doc-title" placeholder="无标题" />
           <div class="toolbar-tools">
+            <button class="wz-btn wz-btn--ghost wz-btn--sm" @click="showLexicon = true">词库</button>
+            <button class="wz-btn wz-btn--ghost wz-btn--sm" @click="showApiSettings = true">AI</button>
             <FormatSplitPanel />
             <ExportPanel />
           </div>
@@ -140,8 +151,12 @@ function cycleSkin() {
     </section>
 
     <aside class="inspector">
+      <CorrectionPanel />
       <WordCountPanel />
     </aside>
+
+    <LexiconPanel v-if="showLexicon" @close="showLexicon = false" />
+    <ApiSettingsPanel v-if="showApiSettings" @close="showApiSettings = false" />
   </div>
 </template>
 

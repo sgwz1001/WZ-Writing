@@ -1,4 +1,4 @@
-declare module 'write-excel-file' {
+declare module 'write-excel-file/browser' {
   interface Cell {
     value: string | number | boolean | Date
     type?: 'string' | 'number' | 'boolean' | 'date'

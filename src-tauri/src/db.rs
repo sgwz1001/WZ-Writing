@@ -541,6 +541,158 @@ pub fn set_setting(conn: &Connection, key: &str, value: &str) -> AppResult<()> {
     Ok(())
 }
 
+// ─────────────────────────────────────────────
+//  错词库 / 白名单
+// ─────────────────────────────────────────────
+
+#[derive(Debug, Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct LexiconEntry {
+    pub id: String,
+    pub wrong: String,
+    pub right: String,
+    pub category: String,
+    pub note: String,
+    pub enabled: bool,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LexiconInput {
+    pub wrong: String,
+    pub right: String,
+    pub category: Option<String>,
+    pub note: Option<String>,
+}
+
+pub fn list_lexicon(conn: &Connection, enabled_only: bool) -> AppResult<Vec<LexiconEntry>> {
+    let sql = if enabled_only {
+        "SELECT id, wrong, right, category, note, enabled FROM lexicon WHERE enabled = 1 ORDER BY wrong"
+    } else {
+        "SELECT id, wrong, right, category, note, enabled FROM lexicon ORDER BY wrong"
+    };
+    let mut stmt = conn.prepare(sql)?;
+    let rows = stmt.query_map([], |r| {
+        Ok(LexiconEntry {
+            id: r.get(0)?,
+            wrong: r.get(1)?,
+            right: r.get(2)?,
+            category: r.get(3)?,
+            note: r.get(4)?,
+            enabled: r.get::<_, i64>(5)? != 0,
+        })
+    })?;
+    rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
+}
+
+pub fn add_lexicon(
+    conn: &Connection,
+    wrong: &str,
+    right: &str,
+    category: &str,
+    note: &str,
+) -> AppResult<()> {
+    let wrong = wrong.trim();
+    let right = right.trim();
+    if wrong.is_empty() {
+        return Err(AppError::Invalid("错词不能为空".into()));
+    }
+    conn.execute(
+        "INSERT INTO lexicon (id, wrong, right, category, note, enabled)
+         VALUES (?1, ?2, ?3, ?4, ?5, 1)
+         ON CONFLICT(wrong) DO UPDATE SET right = excluded.right, category = excluded.category, note = excluded.note, enabled = 1",
+        params![uuid::Uuid::new_v4().to_string(), wrong, right, category, note],
+    )?;
+    Ok(())
+}
+
+pub fn set_lexicon_enabled(conn: &Connection, id: &str, enabled: bool) -> AppResult<()> {
+    conn.execute(
+        "UPDATE lexicon SET enabled = ?1 WHERE id = ?2",
+        params![if enabled { 1 } else { 0 }, id],
+    )?;
+    Ok(())
+}
+
+pub fn remove_lexicon(conn: &Connection, id: &str) -> AppResult<()> {
+    conn.execute("DELETE FROM lexicon WHERE id = ?1", params![id])?;
+    Ok(())
+}
+
+pub fn import_lexicon(conn: &Connection, entries: &[LexiconInput]) -> AppResult<usize> {
+    let mut count = 0;
+    for e in entries {
+        let wrong = e.wrong.trim();
+        if wrong.is_empty() {
+            continue;
+        }
+        add_lexicon(
+            conn,
+            wrong,
+            &e.right,
+            e.category.as_deref().unwrap_or("imported"),
+            e.note.as_deref().unwrap_or(""),
+        )?;
+        count += 1;
+    }
+    Ok(count)
+}
+
+/// 供编辑器实时标红：返回所有启用的 (错词, 正确词) 对。
+pub fn lexicon_map(conn: &Connection) -> AppResult<Vec<(String, String)>> {
+    let mut stmt = conn.prepare("SELECT wrong, right FROM lexicon WHERE enabled = 1")?;
+    let rows = stmt.query_map([], |r| Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?)))?;
+    rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
+}
+
+#[derive(Debug, Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct WhitelistEntry {
+    pub id: String,
+    pub term: String,
+    pub project_id: Option<String>,
+    pub note: String,
+}
+
+pub fn add_whitelist(
+    conn: &Connection,
+    term: &str,
+    project_id: Option<&str>,
+    note: &str,
+) -> AppResult<()> {
+    let term = term.trim();
+    if term.is_empty() {
+        return Err(AppError::Invalid("专有名词不能为空".into()));
+    }
+    conn.execute(
+        "INSERT INTO whitelist (id, term, project_id, note) VALUES (?1, ?2, ?3, ?4)
+         ON CONFLICT(term, project_id) DO UPDATE SET note = excluded.note",
+        params![uuid::Uuid::new_v4().to_string(), term, project_id, note],
+    )?;
+    Ok(())
+}
+
+pub fn remove_whitelist(conn: &Connection, id: &str) -> AppResult<()> {
+    conn.execute("DELETE FROM whitelist WHERE id = ?1", params![id])?;
+    Ok(())
+}
+
+/// 列出白名单。编辑器实时标红时会排除这些专有名词。
+pub fn list_whitelist(conn: &Connection) -> AppResult<Vec<WhitelistEntry>> {
+    let mut stmt = conn.prepare(
+        "SELECT id, term, project_id, note FROM whitelist ORDER BY term",
+    )?;
+    let rows = stmt.query_map([], |r| {
+        Ok(WhitelistEntry {
+            id: r.get(0)?,
+            term: r.get(1)?,
+            project_id: r.get(2)?,
+            note: r.get(3)?,
+        })
+    })?;
+    rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
+}
+
 fn now_rfc3339() -> String {
     chrono::Local::now().to_rfc3339()
 }

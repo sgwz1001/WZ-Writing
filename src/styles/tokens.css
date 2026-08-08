@@ -169,6 +169,12 @@
   --sidebar-w: 264px;
   --sidebar-w-collapsed: 56px;
   --inspector-w: 320px;
+
+  /* ── 语义色：纠错标注 ─────────────────────────
+     error = 红色硬伤（错词/错别字）  warn = 黄色提示（标点/格式）。
+     用 color-mix 让皮肤能整体微调，这里给一个通用可读默认值。 */
+  --c-error: #ff5a5a;
+  --c-warn: #e0a83a;
 }
 
 /* 尊重系统的「减少动态效果」设置。

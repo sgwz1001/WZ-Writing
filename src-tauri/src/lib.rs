@@ -226,6 +226,16 @@ pub fn run() {
             commands::read_text_file,
             commands::write_text_file,
             commands::write_binary_file,
+            // 错词库 / 白名单
+            commands::list_lexicon,
+            commands::add_lexicon,
+            commands::set_lexicon_enabled,
+            commands::remove_lexicon,
+            commands::import_lexicon,
+            commands::get_lexicon_map,
+            commands::add_whitelist,
+            commands::remove_whitelist,
+            commands::list_whitelist,
         ])
         .run(tauri::generate_context!())
         .expect("文载启动失败");

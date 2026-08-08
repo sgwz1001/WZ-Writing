@@ -15,6 +15,9 @@ pub enum AppError {
     #[error("{0}")]
     InvalidPath(String),
 
+    #[error("{0}")]
+    Invalid(String),
+
     #[error("数据库出错：{0}")]
     Db(String),
 
@@ -50,6 +53,7 @@ impl AppError {
         match self {
             AppError::Io(_) => "io",
             AppError::InvalidPath(_) => "invalid_path",
+            AppError::Invalid(_) => "invalid",
             AppError::Db(_) => "db",
             AppError::NotFound(_) => "not_found",
             AppError::Conflict(_) => "conflict",
