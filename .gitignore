@@ -1,0 +1,35 @@
+# 依赖
+node_modules
+.pnpm-store
+
+# 构建产物
+dist
+dist-ssr
+*.local
+
+# Tauri
+src-tauri/gen
+src-tauri/target
+
+# 图标默认保留（由 tools/make_icons.py 生成）
+
+# 编辑器
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.sw?
+
+# 日志
+*.log
+npm-debug.log*
+
+# 测试
+coverage
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 本地敏感
+.env
+.env.*

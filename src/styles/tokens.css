@@ -1,0 +1,188 @@
+/**
+ * 文载 · 基础设计令牌
+ *
+ * 这一层与皮肤无关：尺度、字阶、动效曲线、层级、时长。
+ * 三套皮肤只覆写颜色与质感，绝不改动此处的节奏，
+ * 这样切换皮肤时布局不会跳动。
+ */
+
+:root {
+  /* ── 间距阶 ───────────────────────────────────
+     以 4px 为基数。写作类界面需要大量留白，
+     因此高阶跨度比一般后台系统更大。 */
+  --sp-0: 0;
+  --sp-1: 2px;
+  --sp-2: 4px;
+  --sp-3: 8px;
+  --sp-4: 12px;
+  --sp-5: 16px;
+  --sp-6: 20px;
+  --sp-7: 24px;
+  --sp-8: 32px;
+  --sp-9: 40px;
+  --sp-10: 56px;
+  --sp-11: 72px;
+  --sp-12: 96px;
+
+  /* ── 字阶 ─────────────────────────────────────
+     正文用 1.125 比例，标题用 1.25，
+     中文在小字号下笔画容易糊，因此最小值定在 12px。 */
+  --fs-xs: 12px;
+  --fs-sm: 13px;
+  --fs-base: 14px;
+  --fs-md: 15px;
+  --fs-lg: 17px;
+  --fs-xl: 20px;
+  --fs-2xl: 24px;
+  --fs-3xl: 30px;
+  --fs-4xl: 38px;
+  --fs-5xl: 48px;
+
+  /* 正文区独立字号：写作时由用户调节，不受界面字阶影响 */
+  --fs-manuscript: 17px;
+
+  /* ── 行高 ─────────────────────────────────────
+     中文行距需求高于西文。正文 1.9 是长时间阅读的舒适区。 */
+  --lh-tight: 1.25;
+  --lh-snug: 1.45;
+  --lh-normal: 1.6;
+  --lh-relaxed: 1.75;
+  --lh-manuscript: 1.9;
+
+  /* ── 字重 ───────────────────────────────────── */
+  --fw-normal: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+
+  /* ── 字间距 ───────────────────────────────────
+     中文标题适度加宽字距会显著提升质感。 */
+  --ls-tight: -0.01em;
+  --ls-normal: 0;
+  --ls-wide: 0.02em;
+  --ls-wider: 0.08em;
+  --ls-widest: 0.2em;
+
+  /* ── 字族 ─────────────────────────────────────
+     用户可上传自定义字体，届时覆写 --font-user-* 即可。 */
+  --font-ui: var(--font-user-ui, 'Microsoft YaHei UI', 'PingFang SC', 'Noto Sans SC', system-ui, sans-serif);
+  --font-serif: var(--font-user-serif, 'Source Han Serif SC', 'Noto Serif SC', 'SimSun', Georgia, serif);
+  --font-mono: var(--font-user-mono, 'JetBrains Mono', 'Cascadia Code', Consolas, monospace);
+  --font-manuscript: var(--font-user-manuscript, var(--font-serif));
+  --font-display: var(--font-user-display, var(--font-serif));
+
+  /* 常用间距别名：既有 --sp-* 精确阶，也有 --space-* 语义阶 */
+  --space-1: var(--sp-1);
+  --space-2: var(--sp-2);
+  --space-3: var(--sp-3);
+  --space-4: var(--sp-4);
+  --space-5: var(--sp-5);
+  --space-6: var(--sp-6);
+  --space-7: var(--sp-7);
+  --space-8: var(--sp-8);
+  --space-9: var(--sp-9);
+  --space-10: var(--sp-10);
+
+  /* ── 圆角 ─────────────────────────────────────
+     皮肤会覆写 --radius-scale 来整体调节风格：
+     原神偏圆润 (1.2)，星铁标准 (1)，绝区零偏锐利 (0.35)。 */
+  --radius-scale: 1;
+  --radius-xs: calc(3px * var(--radius-scale));
+  --radius-sm: calc(6px * var(--radius-scale));
+  --radius-md: calc(10px * var(--radius-scale));
+  --radius-lg: calc(14px * var(--radius-scale));
+  --radius-xl: calc(20px * var(--radius-scale));
+  --radius-2xl: calc(28px * var(--radius-scale));
+  --radius-full: 9999px;
+
+  /* ── 边框 ───────────────────────────────────── */
+  --bw-hair: 1px;
+  --bw-thin: 1.5px;
+  --bw-base: 2px;
+  --bw-thick: 3px;
+
+  /* ── 动效时长 ─────────────────────────────────
+     准则：位移越小、时长越短。超过 400ms 的界面动画会让人觉得卡。
+     只有「场景级」转场（日夜切换、启动动画）才允许更长。 */
+  --dur-instant: 80ms;
+  --dur-fast: 140ms;
+  --dur-base: 200ms;
+  --dur-slow: 300ms;
+  --dur-slower: 450ms;
+  --dur-scene: 700ms;
+
+  /* ── 缓动曲线 ─────────────────────────────────
+     入场用 ease-out 家族：起步快、收尾缓，感觉「已经到了」。
+     离场用 ease-in：起步缓、收尾快，感觉「走干净了」。
+     绝不使用 linear，除了无限循环的旋转与进度。 */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in: cubic-bezier(0.7, 0, 0.84, 0);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+
+  /* 弹性曲线：用于「有质量感」的元素，如面板弹出、按钮回弹。
+     用 linear() 逼近真实弹簧，比 cubic-bezier 更接近物理手感。 */
+  --ease-spring: linear(
+    0, 0.0039 1.6%, 0.0157 3.3%, 0.0625 6.7%, 0.1407 10.3%, 0.25 14.1%,
+    0.3908 18.1%, 0.5625 22.4%, 0.7159 26%, 0.8453 29.7%, 0.9502 33.7%,
+    1.0312 37.9%, 1.0888 42.4%, 1.1235 47.3%, 1.1361 52.6%, 1.1276 58.4%,
+    1.0993 64.9%, 1.0532 72.2%, 1.0009 80.6%, 0.9995 82.4%, 1
+  );
+
+  /* 柔弹：过冲更小，用于频繁触发的微交互，避免视觉噪音 */
+  --ease-spring-soft: linear(
+    0, 0.0085 3.3%, 0.0344 6.7%, 0.1305 13.4%, 0.2836 20.3%, 0.4653 27.4%,
+    0.6467 34.7%, 0.8064 42.4%, 0.9309 50.4%, 1.0154 58.9%, 1.0611 67.9%,
+    1.0766 77.5%, 1.0716 87.8%, 1.0566 100%, 1
+  );
+
+  /* ── 层级 ─────────────────────────────────────
+     全部集中定义，禁止在组件里写魔数 z-index。 */
+  --z-base: 0;
+  --z-raised: 10;
+  --z-sticky: 100;
+  --z-drawer: 200;
+  --z-overlay: 300;
+  --z-modal: 400;
+  --z-popover: 500;
+  --z-toast: 600;
+  --z-boss-key: 900;
+  --z-splash: 1000;
+
+  /* ── 模糊 ─────────────────────────────────────
+     用户可调「毛玻璃强度」，最终乘到 --blur-intensity 上。 */
+  --blur-intensity: 1;
+  --blur-sm: calc(6px * var(--blur-intensity));
+  --blur-md: calc(14px * var(--blur-intensity));
+  --blur-lg: calc(28px * var(--blur-intensity));
+  --blur-xl: calc(48px * var(--blur-intensity));
+
+  /* ── 排版栏宽 ─────────────────────────────────
+     中文每行 32—38 字最易读，按 17px 字号折算约 640px。 */
+  --measure-narrow: 560px;
+  --measure-base: 680px;
+  --measure-wide: 820px;
+
+  /* ── 布局尺度 ───────────────────────────────── */
+  --titlebar-h: 40px;
+  --statusbar-h: 28px;
+  --sidebar-w: 264px;
+  --sidebar-w-collapsed: 56px;
+  --inspector-w: 320px;
+}
+
+/* 尊重系统的「减少动态效果」设置。
+   注意：不是粗暴地把时长清零 —— 那会让状态切换显得突兀，
+   而是压缩到几乎瞬时，同时保留必要的淡入淡出。 */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-instant: 1ms;
+    --dur-fast: 1ms;
+    --dur-base: 1ms;
+    --dur-slow: 1ms;
+    --dur-slower: 1ms;
+    --dur-scene: 1ms;
+    --ease-spring: ease-out;
+    --ease-spring-soft: ease-out;
+  }
+}

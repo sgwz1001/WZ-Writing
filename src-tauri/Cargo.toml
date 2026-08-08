@@ -1,0 +1,67 @@
+[package]
+name = "wenzai"
+version = "0.1.0"
+description = "文载 Writing —— 面向中文写作者的本地优先写作工作台"
+authors = ["sgwz1001"]
+edition = "2021"
+rust-version = "1.77.2"
+default-run = "wenzai"
+
+[lib]
+# Tauri 2 的标准做法：业务逻辑放 lib，main.rs 只做入口，
+# 这样集成测试和未来的移动端都能复用同一套代码。
+name = "wenzai_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["protocol-asset", "tray-icon", "image-png"] }
+tauri-plugin-dialog = "2"
+tauri-plugin-fs = "2"
+tauri-plugin-log = "2"
+tauri-plugin-opener = "2"
+tauri-plugin-os = "2"
+tauri-plugin-process = "2"
+tauri-plugin-store = "2"
+
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# bundled 特性会把 SQLite 源码一起编进来，
+# 用户机器上无需预装任何东西，也不受系统 sqlite 版本影响。
+rusqlite = { version = "0.32", features = ["bundled", "chrono"] }
+
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1", features = ["v4", "serde"] }
+thiserror = "2"
+anyhow = "1"
+log = "0.4"
+parking_lot = "0.12"
+sha2 = "0.10"
+
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+tauri-plugin-global-shortcut = "2"
+tauri-plugin-autostart = "2"
+tauri-plugin-single-instance = "2"
+
+[target.'cfg(windows)'.dependencies]
+# 微软官方维护的 Win32 绑定，用于老板键、字体枚举、打印与崩溃捕获
+windows = { version = "0.58", features = [
+    "Win32_Foundation",
+    "Win32_UI_WindowsAndMessaging",
+    "Win32_System_Threading",
+    "Win32_Graphics_Gdi",
+] }
+
+[profile.dev]
+incremental = true
+
+[profile.release]
+# 体积与性能的平衡：opt-level "s" 比 3 小约 20%，对本应用性能影响可忽略
+opt-level = "s"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true

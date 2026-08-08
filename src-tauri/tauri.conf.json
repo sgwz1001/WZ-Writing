@@ -1,0 +1,78 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "文载 Writing",
+  "version": "0.1.0",
+  "identifier": "com.wenzai.app",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:5273",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "文载 Writing",
+        "width": 1440,
+        "height": 900,
+        "minWidth": 1080,
+        "minHeight": 680,
+        "center": true,
+        "resizable": true,
+        "maximizable": true,
+        "fullscreen": false,
+        "decorations": false,
+        "transparent": false,
+        "shadow": true,
+        "visible": false,
+        "focus": true,
+        "dragDropEnabled": true,
+        "theme": null,
+        "backgroundColor": "#12131A"
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' asset: http://asset.localhost data: blob:; font-src 'self' asset: http://asset.localhost data:; media-src 'self' asset: http://asset.localhost; connect-src 'self' ipc: http://ipc.localhost https://*",
+      "assetProtocol": {
+        "enable": true,
+        "scope": {
+          "allow": ["$APPCONFIG/**", "$DOCUMENT/**", "$HOME/**"],
+          "deny": ["$HOME/.ssh/**"]
+        }
+      }
+    },
+    "withGlobalTauri": false
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis"],
+    "publisher": "文载 Writing",
+    "copyright": "文以载道",
+    "category": "Productivity",
+    "shortDescription": "面向中文写作者的本地写作工作台",
+    "longDescription": "文载 Writing —— 本地优先的中文写作工作台。稿件全程留在你自己的硬盘上，断点续写、崩溃可恢复。",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.ico"
+    ],
+    "resources": {},
+    "windows": {
+      "webviewInstallMode": {
+        "type": "downloadBootstrapper",
+        "silent": true
+      },
+      "allowDowngrades": false,
+      "nsis": {
+        "displayLanguageSelector": false,
+        "languages": ["SimpChinese"],
+        "installerIcon": "icons/icon.ico",
+        "installMode": "both",
+        "compression": "lzma",
+        "startMenuFolder": "文载 Writing"
+      }
+    }
+  }
+}

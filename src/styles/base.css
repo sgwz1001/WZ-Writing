@@ -1,0 +1,240 @@
+/**
+ * 文载 · 全局基样式
+ * 顺序要求：tokens → skins → base
+ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  /* 皮肤切换时整体过渡。只过渡颜色，不过渡布局属性，避免重排抖动。 */
+  transition:
+    background-color var(--dur-scene) var(--ease-in-out),
+    color var(--dur-scene) var(--ease-in-out);
+}
+
+body {
+  background-color: var(--c-bg);
+  color: var(--c-text);
+  font-family: var(--font-ui);
+  font-size: var(--fs-base);
+  line-height: var(--lh-normal);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+
+  /* 桌面应用不应有网页那种整页滚动与橡皮筋 */
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+/* 桌面端默认禁止选中，只在正文与可选文本区域放开。
+   否则拖动界面时会误选文字，非常廉价。 */
+body {
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: default;
+}
+
+.selectable,
+input,
+textarea,
+[contenteditable='true'] {
+  user-select: text;
+  -webkit-user-select: text;
+  cursor: auto;
+}
+
+/* 禁用 WebView 的右键菜单与图片拖拽（生产环境）*/
+img {
+  -webkit-user-drag: none;
+  user-drag: none;
+  max-width: 100%;
+}
+
+::selection {
+  background-color: var(--c-selection);
+}
+
+/* ── 滚动条 ───────────────────────────────────── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--c-scrollbar) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: var(--c-scrollbar);
+  border-radius: var(--radius-full);
+  border: 3px solid transparent;
+  background-clip: content-box;
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: var(--c-text-tertiary);
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* ── 焦点可见 ─────────────────────────────────
+   只在键盘导航时显示焦点环，鼠标点击不显示。
+   无障碍不能砍，但也不能让鼠标用户看到丑陋的轮廓。 */
+:focus {
+  outline: none;
+}
+
+:focus-visible {
+  outline: var(--bw-base) solid var(--c-accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-xs);
+}
+
+/* ── 排版复位 ─────────────────────────────────── */
+h1, h2, h3, h4, h5, h6, p, figure, blockquote, dl, dd {
+  margin: 0;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-tight);
+}
+
+ul, ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+a {
+  color: var(--c-accent);
+  text-decoration: none;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+code, pre, kbd {
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+}
+
+hr {
+  border: none;
+  border-top: var(--bw-hair) solid var(--c-border);
+  margin: 0;
+}
+
+/* ── 可复用工具类 ─────────────────────────────── */
+
+/* 毛玻璃。降级策略：不支持 backdrop-filter 时退回不透明背景，
+   否则内容会糊在一起完全没法看。 */
+.glass {
+  background-color: var(--glass-bg);
+  border: var(--bw-hair) solid var(--glass-border);
+  backdrop-filter: blur(var(--blur-md)) saturate(1.6);
+  -webkit-backdrop-filter: blur(var(--blur-md)) saturate(1.6);
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .glass {
+    background-color: var(--c-bg-raised);
+  }
+}
+
+/* 屏幕阅读器专用 */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* 窗口拖拽区（Tauri 自定义标题栏用）*/
+.drag-region {
+  -webkit-app-region: drag;
+  app-region: drag;
+}
+
+.no-drag {
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
+}
+
+/* 噪点纹理层 —— 绝区零皮肤下最明显，其余皮肤只作极淡的质感垫底。
+   用 SVG feTurbulence 生成，无需外部图片资源。 */
+.texture-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: var(--z-raised);
+  opacity: var(--texture-opacity);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+  mix-blend-mode: overlay;
+}
+
+/* 自定义背景图层 —— 用户上传的图片铺在最底，
+   上面盖一层与 --c-bg 同色的半透明幕，保证文字始终可读。 */
+.custom-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  transition: opacity var(--dur-scene) var(--ease-in-out);
+}
+
+.custom-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-color: var(--c-bg);
+  opacity: var(--bg-scrim, 0.72);
+  backdrop-filter: blur(var(--bg-blur, 0px));
+  -webkit-backdrop-filter: blur(var(--bg-blur, 0px));
+}

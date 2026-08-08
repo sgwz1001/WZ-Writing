@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="zh-CN" data-skin="star" data-mode="night">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' asset: http://asset.localhost data: blob:; style-src 'self' 'unsafe-inline'; font-src 'self' asset: http://asset.localhost data:" />
+    <title>文载 Writing</title>
+    <script>
+      // 在首帧之前恢复皮肤与日夜模式，避免启动瞬间的白屏闪烁
+      ;(function () {
+        try {
+          var raw = localStorage.getItem('wenzai.appearance')
+          if (!raw) return
+          var a = JSON.parse(raw)
+          var el = document.documentElement
+          if (a.skin) el.setAttribute('data-skin', a.skin)
+          if (a.mode) el.setAttribute('data-mode', a.mode)
+        } catch (e) {
+          /* 读取失败就用默认值，不阻塞启动 */
+        }
+      })()
+    </script>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

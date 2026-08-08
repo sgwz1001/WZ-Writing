@@ -1,0 +1,50 @@
+{
+  "name": "wenzai",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "文载 Writing —— 面向中文写作者的本地优先写作工作台",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "tauri": "tauri",
+    "app:dev": "tauri dev",
+    "app:build": "tauri build",
+    "typecheck": "vue-tsc --noEmit"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.11.1",
+    "@tauri-apps/plugin-dialog": "^2",
+    "@tauri-apps/plugin-fs": "^2",
+    "@tauri-apps/plugin-global-shortcut": "^2",
+    "@tauri-apps/plugin-log": "^2",
+    "@tauri-apps/plugin-opener": "^2",
+    "@tauri-apps/plugin-os": "^2",
+    "@tauri-apps/plugin-process": "^2",
+    "@tauri-apps/plugin-store": "^2",
+    "@tiptap/extension-character-count": "^3.29.2",
+    "@tiptap/extension-highlight": "^3.29.2",
+    "@tiptap/extension-placeholder": "^3.29.2",
+    "@tiptap/starter-kit": "^3.29.2",
+    "@tiptap/vue-3": "^3.29.2",
+    "docx": "^9.7.1",
+    "file-saver": "^2.0.5",
+    "motion-v": "^2.3.0",
+    "pinia": "^4.0.2",
+    "vue": "^3.5.41",
+    "vue-router": "^5.2.0",
+    "write-excel-file": "^4.1.1"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.11.4",
+    "@types/node": "^26.2.0",
+    "@vitejs/plugin-vue": "^6.0.8",
+    "typescript": "~5.9.3",
+    "vite": "^8.2.1",
+    "vue-tsc": "^3.3.9"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  }
+}

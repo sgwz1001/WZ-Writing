@@ -1,0 +1,354 @@
+/**
+ * 文载 · 皮肤令牌
+ *
+ * 三套皮肤 × 日夜双模式，共六组配色。
+ * 通过 <html data-skin="…" data-mode="…"> 切换。
+ *
+ *   genshin  提瓦特   羊皮纸质感、元素色彩、温暖通透，适合长时间写作
+ *   star     星穹     深空蓝紫、金色描边、卡片化，信息密度最高
+ *   zenless  新艾利都 高饱和撞色、硬边几何、噪点，冲击力最强
+ *
+ * 语义命名规则：
+ *   --c-bg-*        背景层（越 sunken 越远，越 raised 越近）
+ *   --c-surface-*   可交互表面
+ *   --c-text-*      文字（primary / secondary / tertiary）
+ *   --c-accent-*    主强调色
+ *   --c-mark-*      校对标注色（这是本产品的核心视觉语言，六套皮肤必须都保证可读）
+ */
+
+/* ══════════════════════════════════════════════
+   通用语义色 —— 与皮肤无关的功能色兜底
+   ══════════════════════════════════════════════ */
+:root {
+  --c-success: #3BA55C;
+  --c-warning: #E0A32E;
+  --c-danger: #E05252;
+  --c-info: #4A90D9;
+
+  /* 语义别名：组件写 --c-bg-base 时，实际指向皮肤里的 --c-bg */
+  --c-bg-base: var(--c-bg);
+  --c-bg-base-secondary: var(--c-bg-sunken);
+  --c-text-base: var(--c-text);
+  --c-text-on-accent: var(--c-accent-fg);
+  --c-surface-elevated: var(--c-bg-raised);
+  --c-surface-glass: var(--glass-bg);
+
+  /* 用户可调模糊：默认强度 1 */
+  --user-blur: 1;
+}
+
+/* ══════════════════════════════════════════════
+   原神 · 提瓦特 —— 白日
+   ══════════════════════════════════════════════ */
+[data-skin='genshin'][data-mode='day'] {
+  --radius-scale: 1.2;
+
+  --c-bg: #F2EADB;
+  --c-bg-sunken: #E8DEC9;
+  --c-bg-raised: #FBF7EE;
+
+  --c-surface: rgba(255, 253, 248, 0.78);
+  --c-surface-hover: rgba(255, 255, 255, 0.94);
+  --c-surface-active: rgba(240, 231, 213, 0.96);
+
+  --c-border: rgba(120, 100, 68, 0.16);
+  --c-border-strong: rgba(120, 100, 68, 0.34);
+
+  --c-text: #3A3126;
+  --c-text-secondary: #6B5D48;
+  --c-text-tertiary: #9A8C74;
+  --c-text-inverse: #FBF7EE;
+
+  --c-accent: #B8914D;
+  --c-accent-hover: #A17F3F;
+  --c-accent-fg: #FFFDF7;
+  --c-accent-soft: rgba(184, 145, 77, 0.14);
+  --c-accent-2: #3E7FC1;
+
+  --c-mark-error: #C43A38;
+  --c-mark-error-bg: rgba(196, 58, 56, 0.13);
+  --c-mark-warn: #B67514;
+  --c-mark-warn-bg: rgba(182, 117, 20, 0.15);
+  --c-mark-add: #2E7D4F;
+  --c-mark-add-bg: rgba(46, 125, 79, 0.13);
+  --c-mark-del: #8A7A63;
+
+  --c-selection: rgba(184, 145, 77, 0.26);
+  --c-scrollbar: rgba(120, 100, 68, 0.26);
+
+  --glass-bg: rgba(255, 252, 244, 0.62);
+  --glass-border: rgba(255, 255, 255, 0.7);
+
+  --shadow-sm: 0 1px 2px rgba(90, 72, 44, 0.07), 0 1px 3px rgba(90, 72, 44, 0.05);
+  --shadow-md: 0 4px 10px rgba(90, 72, 44, 0.09), 0 1px 3px rgba(90, 72, 44, 0.06);
+  --shadow-lg: 0 12px 28px rgba(90, 72, 44, 0.13), 0 4px 8px rgba(90, 72, 44, 0.07);
+  --shadow-glow: 0 0 24px rgba(184, 145, 77, 0.28);
+
+  --texture-opacity: 0.05;
+  --font-ui: var(--font-user-ui, 'Microsoft YaHei UI', 'PingFang SC', system-ui, sans-serif);
+}
+
+/* ══════════════════════════════════════════════
+   原神 · 提瓦特 —— 夜幕
+   ══════════════════════════════════════════════ */
+[data-skin='genshin'][data-mode='night'] {
+  --radius-scale: 1.2;
+
+  --c-bg: #17212F;
+  --c-bg-sunken: #101825;
+  --c-bg-raised: #1F2C3E;
+
+  --c-surface: rgba(38, 53, 73, 0.66);
+  --c-surface-hover: rgba(48, 66, 90, 0.82);
+  --c-surface-active: rgba(56, 77, 104, 0.92);
+
+  --c-border: rgba(211, 188, 142, 0.15);
+  --c-border-strong: rgba(211, 188, 142, 0.34);
+
+  --c-text: #E9E1D1;
+  --c-text-secondary: #A9B4C4;
+  --c-text-tertiary: #6E7C90;
+  --c-text-inverse: #17212F;
+
+  --c-accent: #D3BC8E;
+  --c-accent-hover: #E2CDA4;
+  --c-accent-fg: #1B2534;
+  --c-accent-soft: rgba(211, 188, 142, 0.15);
+  --c-accent-2: #7EC8E3;
+
+  --c-mark-error: #F0736F;
+  --c-mark-error-bg: rgba(240, 115, 111, 0.17);
+  --c-mark-warn: #E8B44C;
+  --c-mark-warn-bg: rgba(232, 180, 76, 0.17);
+  --c-mark-add: #6FC894;
+  --c-mark-add-bg: rgba(111, 200, 148, 0.16);
+  --c-mark-del: #7E8B9C;
+
+  --c-selection: rgba(211, 188, 142, 0.26);
+  --c-scrollbar: rgba(211, 188, 142, 0.24);
+
+  --glass-bg: rgba(31, 44, 62, 0.58);
+  --glass-border: rgba(211, 188, 142, 0.14);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.38);
+  --shadow-lg: 0 14px 34px rgba(0, 0, 0, 0.48);
+  --shadow-glow: 0 0 28px rgba(211, 188, 142, 0.3);
+
+  --texture-opacity: 0.06;
+}
+
+/* ══════════════════════════════════════════════
+   星穹铁道 —— 白日（银灰仪表盘）
+   ══════════════════════════════════════════════ */
+[data-skin='star'][data-mode='day'] {
+  --radius-scale: 1;
+
+  --c-bg: #EDEFF5;
+  --c-bg-sunken: #E0E3EC;
+  --c-bg-raised: #FFFFFF;
+
+  --c-surface: rgba(255, 255, 255, 0.86);
+  --c-surface-hover: #FFFFFF;
+  --c-surface-active: #E7EAF3;
+
+  --c-border: rgba(28, 32, 51, 0.11);
+  --c-border-strong: rgba(28, 32, 51, 0.26);
+
+  --c-text: #1C2033;
+  --c-text-secondary: #555C78;
+  --c-text-tertiary: #8890A8;
+  --c-text-inverse: #FFFFFF;
+
+  --c-accent: #A9762A;
+  --c-accent-hover: #93651F;
+  --c-accent-fg: #FFFFFF;
+  --c-accent-soft: rgba(169, 118, 42, 0.12);
+  --c-accent-2: #5B4FD6;
+
+  --c-mark-error: #C62F45;
+  --c-mark-error-bg: rgba(198, 47, 69, 0.11);
+  --c-mark-warn: #A8730E;
+  --c-mark-warn-bg: rgba(168, 115, 14, 0.14);
+  --c-mark-add: #1E7A52;
+  --c-mark-add-bg: rgba(30, 122, 82, 0.12);
+  --c-mark-del: #8890A8;
+
+  --c-selection: rgba(91, 79, 214, 0.18);
+  --c-scrollbar: rgba(28, 32, 51, 0.22);
+
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.9);
+
+  --shadow-sm: 0 1px 2px rgba(28, 32, 51, 0.07);
+  --shadow-md: 0 4px 12px rgba(28, 32, 51, 0.1);
+  --shadow-lg: 0 14px 32px rgba(28, 32, 51, 0.14);
+  --shadow-glow: 0 0 22px rgba(91, 79, 214, 0.25);
+
+  --texture-opacity: 0.03;
+}
+
+/* ══════════════════════════════════════════════
+   星穹铁道 —— 深空（默认皮肤）
+   ══════════════════════════════════════════════ */
+[data-skin='star'][data-mode='night'] {
+  --radius-scale: 1;
+
+  --c-bg: #0C0F1C;
+  --c-bg-sunken: #070A14;
+  --c-bg-raised: #141A2E;
+
+  --c-surface: rgba(28, 36, 62, 0.62);
+  --c-surface-hover: rgba(38, 48, 80, 0.8);
+  --c-surface-active: rgba(46, 58, 96, 0.9);
+
+  --c-border: rgba(227, 184, 114, 0.16);
+  --c-border-strong: rgba(227, 184, 114, 0.38);
+
+  --c-text: #E7EAF7;
+  --c-text-secondary: #A3ABC7;
+  --c-text-tertiary: #6A7396;
+  --c-text-inverse: #0C0F1C;
+
+  --c-accent: #E3B872;
+  --c-accent-hover: #F0CB8D;
+  --c-accent-fg: #14192B;
+  --c-accent-soft: rgba(227, 184, 114, 0.14);
+  --c-accent-2: #8A7CF5;
+
+  --c-mark-error: #FF7A85;
+  --c-mark-error-bg: rgba(255, 122, 133, 0.16);
+  --c-mark-warn: #FFC85C;
+  --c-mark-warn-bg: rgba(255, 200, 92, 0.16);
+  --c-mark-add: #5FD9A0;
+  --c-mark-add-bg: rgba(95, 217, 160, 0.15);
+  --c-mark-del: #6A7396;
+
+  --c-selection: rgba(138, 124, 245, 0.3);
+  --c-scrollbar: rgba(227, 184, 114, 0.24);
+
+  --glass-bg: rgba(20, 26, 46, 0.6);
+  --glass-border: rgba(227, 184, 114, 0.16);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.38);
+  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.46);
+  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.58);
+  --shadow-glow: 0 0 30px rgba(227, 184, 114, 0.3);
+
+  --texture-opacity: 0.05;
+}
+
+/* ══════════════════════════════════════════════
+   绝区零 · 新艾利都 —— 白日
+   ══════════════════════════════════════════════ */
+[data-skin='zenless'][data-mode='day'] {
+  --radius-scale: 0.35;
+
+  --c-bg: #F3F3F0;
+  --c-bg-sunken: #E6E6E1;
+  --c-bg-raised: #FFFFFF;
+
+  --c-surface: #FFFFFF;
+  --c-surface-hover: #F7F7F4;
+  --c-surface-active: #EAEAE4;
+
+  --c-border: rgba(17, 17, 20, 0.16);
+  --c-border-strong: #111114;
+
+  --c-text: #111114;
+  --c-text-secondary: #4A4A52;
+  --c-text-tertiary: #85858F;
+  --c-text-inverse: #FFFFFF;
+
+  /* 白底下荧光黄绿不可读，压暗到橄榄绿保持辨识度 */
+  --c-accent: #6E8C00;
+  --c-accent-hover: #5C7500;
+  --c-accent-fg: #FFFFFF;
+  --c-accent-soft: rgba(110, 140, 0, 0.14);
+  --c-accent-2: #E5005A;
+
+  --c-mark-error: #D6003C;
+  --c-mark-error-bg: rgba(214, 0, 60, 0.11);
+  --c-mark-warn: #9A6A00;
+  --c-mark-warn-bg: rgba(154, 106, 0, 0.15);
+  --c-mark-add: #007A4D;
+  --c-mark-add-bg: rgba(0, 122, 77, 0.12);
+  --c-mark-del: #85858F;
+
+  --c-selection: rgba(110, 140, 0, 0.24);
+  --c-scrollbar: rgba(17, 17, 20, 0.3);
+
+  --glass-bg: rgba(255, 255, 255, 0.76);
+  --glass-border: rgba(17, 17, 20, 0.1);
+
+  --shadow-sm: 2px 2px 0 rgba(17, 17, 20, 0.9);
+  --shadow-md: 4px 4px 0 rgba(17, 17, 20, 0.9);
+  --shadow-lg: 7px 7px 0 rgba(17, 17, 20, 0.9);
+  --shadow-glow: 0 0 20px rgba(229, 0, 90, 0.3);
+
+  --texture-opacity: 0.08;
+}
+
+/* ══════════════════════════════════════════════
+   绝区零 · 新艾利都 —— 夜（霓虹）
+   ══════════════════════════════════════════════ */
+[data-skin='zenless'][data-mode='night'] {
+  --radius-scale: 0.35;
+
+  --c-bg: #0A0A0C;
+  --c-bg-sunken: #050506;
+  --c-bg-raised: #141418;
+
+  --c-surface: rgba(26, 26, 32, 0.82);
+  --c-surface-hover: rgba(36, 36, 44, 0.94);
+  --c-surface-active: rgba(46, 46, 56, 0.98);
+
+  --c-border: rgba(240, 240, 242, 0.14);
+  --c-border-strong: #C8F73D;
+
+  --c-text: #F0F0F2;
+  --c-text-secondary: #A8A8B2;
+  --c-text-tertiary: #6E6E78;
+  --c-text-inverse: #0A0A0C;
+
+  --c-accent: #C8F73D;
+  --c-accent-hover: #D8FF5E;
+  --c-accent-fg: #0A0A0C;
+  --c-accent-soft: rgba(200, 247, 61, 0.13);
+  --c-accent-2: #FF3E7F;
+
+  --c-mark-error: #FF4D6D;
+  --c-mark-error-bg: rgba(255, 77, 109, 0.17);
+  --c-mark-warn: #FFD23D;
+  --c-mark-warn-bg: rgba(255, 210, 61, 0.16);
+  --c-mark-add: #00E5A0;
+  --c-mark-add-bg: rgba(0, 229, 160, 0.14);
+  --c-mark-del: #6E6E78;
+
+  --c-selection: rgba(200, 247, 61, 0.26);
+  --c-scrollbar: rgba(200, 247, 61, 0.3);
+
+  --glass-bg: rgba(20, 20, 24, 0.7);
+  --glass-border: rgba(200, 247, 61, 0.2);
+
+  --shadow-sm: 2px 2px 0 rgba(200, 247, 61, 0.5);
+  --shadow-md: 4px 4px 0 rgba(200, 247, 61, 0.45);
+  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.7);
+  --shadow-glow: 0 0 26px rgba(200, 247, 61, 0.4);
+
+  --texture-opacity: 0.1;
+}
+
+/* ══════════════════════════════════════════════
+   元素色 —— 原神皮肤专用点缀，同时作为项目标签色板
+   （六套皮肤通用，用于给不同项目/章节打色标）
+   ══════════════════════════════════════════════ */
+:root {
+  --el-anemo: #74C2A8;
+  --el-geo: #E8B33C;
+  --el-electro: #A98FD8;
+  --el-dendro: #8FBF3F;
+  --el-hydro: #4CB8E8;
+  --el-pyro: #E87A55;
+  --el-cryo: #7FCFDE;
+}
