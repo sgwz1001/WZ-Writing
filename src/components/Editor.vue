@@ -52,13 +52,14 @@ watch(
   { immediate: true },
 )
 
-// 词库 / 规则开关变化时，强制重建装饰（无需改动文档）
+// 词库 / 规则开关 / 深度纠错结果变化时，强制重建装饰（无需改动文档）
 watch(
   [
     () => correctionStore.lexiconMap,
     () => correctionStore.whitelistTerms,
     () => correctionStore.rulesOn,
     () => correctionStore.lexiconOn,
+    () => correctionStore.deepIssues,
   ],
   () => {
     const ed = editor.value
