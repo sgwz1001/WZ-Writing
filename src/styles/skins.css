@@ -352,3 +352,160 @@
   --el-pyro: #E87A55;
   --el-cryo: #7FCFDE;
 }
+
+/* ══════════════════════════════════════════════
+   皮肤氛围层 · 游戏感还原
+   ══════════════════════════════════════════════
+   三套皮肤除了配色，还要有「那款游戏」的氛围：
+   原神 = 提瓦特的天空与元素光斑，通透、神圣、温暖
+   星铁 = 星穹列车窗外流动的星光与银河，冷静、广阔
+   绝区零 = 新艾利都的涂鸦霓虹与硬边警示纹，锐利、燥动
+
+   实现方式：一个固定全屏的 .skin-aura 层 + 每套皮肤的
+   专属变量。全部用纯 CSS 渐变，零外部图片，性能无负担。
+   已通过 [data-anim='off'] 关闭流动动画，尊重减少动效偏好。
+   ══════════════════════════════════════════════ */
+
+/* 通用氛围层：盖在背景之上、内容之下 */
+.skin-aura {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* 让所有主要视图的内容都压在氛围层之上 */
+.app-main > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ── 原神：提瓦特天空（白）／ 深空星夜（黑）── */
+[data-skin='genshin'][data-mode='day'] {
+  --aura-1: radial-gradient(120% 90% at 15% 0%, rgba(255, 214, 130, 0.16) 0%, transparent 45%);
+  --aura-2: radial-gradient(90% 80% at 85% 100%, rgba(78, 140, 220, 0.12) 0%, transparent 50%);
+  --aura-3: radial-gradient(50% 40% at 50% 50%, rgba(255, 255, 255, 0.5) 0%, transparent 70%);
+  --aura-fig: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220' viewBox='0 0 220 220'%3E%3Cg fill='none' stroke='%23b8914d' stroke-width='1.4' opacity='0.16'%3E%3Ccircle cx='110' cy='110' r='42'/%3E%3Ccircle cx='110' cy='110' r='62'/%3E%3Ccircle cx='110' cy='110' r='84'/%3E%3Cpath d='M110 8v38M110 174v38M8 110h38M174 110h38'/%3E%3C/g%3E%3C/svg%3E");
+  --aura-glow: radial-gradient(40% 30% at 50% 18%, rgba(255, 224, 160, 0.35) 0%, transparent 70%);
+}
+
+[data-skin='genshin'][data-mode='night'] {
+  --aura-1: radial-gradient(120% 90% at 20% 0%, rgba(90, 150, 220, 0.13) 0%, transparent 50%);
+  --aura-2: radial-gradient(90% 80% at 85% 100%, rgba(140, 90, 200, 0.1) 0%, transparent 50%);
+  --aura-3: radial-gradient(50% 40% at 50% 50%, rgba(255, 255, 255, 0.06) 0%, transparent 70%);
+  --aura-fig: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220' viewBox='0 0 220 220'%3E%3Cg fill='none' stroke='%23d3bc8e' stroke-width='1.4' opacity='0.1'%3E%3Ccircle cx='110' cy='110' r='42'/%3E%3Ccircle cx='110' cy='110' r='62'/%3E%3Ccircle cx='110' cy='110' r='84'/%3E%3Cpath d='M110 8v38M110 174v38M8 110h38M174 110h38'/%3E%3C/g%3E%3C/svg%3E");
+  --aura-glow: radial-gradient(40% 30% at 50% 18%, rgba(180, 220, 255, 0.22) 0%, transparent 70%);
+}
+
+/* ── 星铁：银河星尘（白）／ 星穹深空（黑）── */
+[data-skin='star'][data-mode='day'] {
+  --aura-1: radial-gradient(100% 80% at 80% 0%, rgba(91, 79, 214, 0.1) 0%, transparent 55%);
+  --aura-2: radial-gradient(80% 70% at 10% 90%, rgba(169, 118, 42, 0.08) 0%, transparent 50%);
+  --aura-3: radial-gradient(60% 40% at 50% 50%, rgba(255, 255, 255, 0.4) 0%, transparent 70%);
+  --aura-fig: none;
+  --aura-glow: radial-gradient(30% 25% at 75% 12%, rgba(160, 150, 255, 0.18) 0%, transparent 70%);
+}
+
+[data-skin='star'][data-mode='night'] {
+  --aura-1: radial-gradient(120% 90% at 75% 0%, rgba(91, 79, 214, 0.16) 0%, transparent 55%);
+  --aura-2: radial-gradient(80% 70% at 8% 95%, rgba(227, 184, 114, 0.08) 0%, transparent 55%);
+  --aura-3: radial-gradient(60% 40% at 50% 50%, rgba(255, 255, 255, 0.05) 0%, transparent 70%);
+  --aura-fig: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='300' viewBox='0 0 600 300'%3E%3Cg fill='%23ffffff' opacity='0.28'%3E%3Ccircle cx='40' cy='60' r='1.2'/%3E%3Ccircle cx='120' cy='25' r='0.8'/%3E%3Ccircle cx='200' cy='90' r='1.5'/%3E%3Ccircle cx='300' cy='40' r='1'/%3E%3Ccircle cx='380' cy='80' r='1.4'/%3E%3Ccircle cx='470' cy='30' r='0.9'/%3E%3Ccircle cx='550' cy='70' r='1.3'/%3E%3Ccircle cx='90' cy='150' r='0.8'/%3E%3Ccircle cx='260' cy='180' r='1.1'/%3E%3Ccircle cx='420' cy='160' r='0.7'/%3E%3Ccircle cx='520' cy='200' r='1.2'/%3E%3Ccircle cx='60' cy='250' r='1'/%3E%3Ccircle cx='340' cy='260' r='0.8'/%3E%3Ccircle cx='560' cy='260' r='1.1'/%3E%3C/g%3E%3C/svg%3E");
+  --aura-glow: radial-gradient(35% 30% at 78% 10%, rgba(140, 130, 255, 0.22) 0%, transparent 70%);
+}
+
+/* ── 绝区零：新艾利都霓虹（白）／ 电子夜城（黑）── */
+[data-skin='zenless'][data-mode='day'] {
+  --aura-1: linear-gradient(115deg, rgba(229, 0, 90, 0.05) 0%, transparent 40%), radial-gradient(90% 80% at 85% 0%, rgba(110, 140, 0, 0.07) 0%, transparent 55%);
+  --aura-2: radial-gradient(60% 50% at 10% 95%, rgba(0, 122, 205, 0.06) 0%, transparent 55%);
+  --aura-3: none;
+  --aura-fig: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Cpath d='M0 0h40v40H0z' fill='none' stroke='%23111114' stroke-width='0.8' opacity='0.06'/%3E%3Cpath d='M20 0v40M0 20h40' stroke='%23111114' stroke-width='0.4' opacity='0.04'/%3E%3C/svg%3E");
+  --aura-glow: radial-gradient(30% 25% at 80% 15%, rgba(229, 0, 90, 0.12) 0%, transparent 70%);
+}
+
+[data-skin='zenless'][data-mode='night'] {
+  --aura-1: linear-gradient(115deg, rgba(255, 62, 127, 0.07) 0%, transparent 40%), radial-gradient(90% 80% at 85% 0%, rgba(200, 247, 61, 0.07) 0%, transparent 55%);
+  --aura-2: radial-gradient(60% 50% at 10% 95%, rgba(0, 229, 255, 0.05) 0%, transparent 55%);
+  --aura-3: none;
+  --aura-fig: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Cpath d='M0 0h40v40H0z' fill='none' stroke='%23c8f73d' stroke-width='0.8' opacity='0.09'/%3E%3Cpath d='M20 0v40M0 20h40' stroke='%23c8f73d' stroke-width='0.4' opacity='0.06'/%3E%3C/svg%3E");
+  --aura-glow: radial-gradient(35% 25% at 75% 12%, rgba(200, 247, 61, 0.2) 0%, transparent 70%);
+}
+
+/* 氛围层内容 */
+.skin-aura::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    var(--aura-1, transparent),
+    var(--aura-2, transparent),
+    var(--aura-3, transparent);
+  transition: background var(--dur-scene) var(--ease-in-out);
+}
+
+.skin-aura::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: var(--aura-fig, none);
+  background-size: 220px auto;
+  background-repeat: repeat;
+  animation: aura-drift 90s linear infinite;
+  opacity: 0.9;
+}
+[data-skin='zenless'] .skin-aura::after {
+  background-size: 40px auto;
+  animation: aura-drift-zen 28s linear infinite;
+}
+
+@keyframes aura-drift {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 220px 110px;
+  }
+}
+@keyframes aura-drift-zen {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 40px 40px;
+  }
+}
+[data-anim='off'] .skin-aura::after {
+  animation: none;
+}
+
+/* 顶部一束「神光」：三套皮肤共同的呼吸高光 */
+.skin-aura .aura-glow {
+  position: absolute;
+  inset: 0;
+  background: var(--aura-glow, transparent);
+  animation: aura-breathe 7s var(--ease-in-out) infinite;
+}
+@keyframes aura-breathe {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+[data-anim='off'] .skin-aura .aura-glow {
+  animation: none;
+}
+
+/* ── 自定义背景：蒙版浓度由 store 注入 --user-bg-veil ── */
+[data-has-bg] {
+  --bg-scrim: var(--user-bg-veil, 0.62);
+}
+[data-has-bg] .custom-bg {
+  background-image: var(--user-bg, none);
+}
+[data-has-bg] .custom-bg::after {
+  opacity: var(--bg-scrim, 0.62);
+}
