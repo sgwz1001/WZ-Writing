@@ -8,7 +8,10 @@ const stage = ref<'enter' | 'hold' | 'leave'>('enter')
 onMounted(() => {
   setTimeout(() => (stage.value = 'hold'), 1200)
   setTimeout(() => (stage.value = 'leave'), 3000)
-  setTimeout(() => router.replace('/identity'), 3600)
+  // 老用户直接落在首页总览（上次写到哪一眼可见）；
+  // 第一次打开的人才去身份页做一次选择。
+  const firstRun = !localStorage.getItem('wenzai:last-identity')
+  setTimeout(() => router.replace(firstRun ? '/identity' : '/home'), 3600)
 })
 </script>
 
