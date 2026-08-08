@@ -7,6 +7,7 @@
 import { defineStore } from 'pinia'
 import { reactive, ref, watch } from 'vue'
 import { invoke } from '@tauri-apps/api/core'
+import { migrateModelConfig } from '../data/models'
 
 export interface AiConfig {
   provider: string
@@ -27,6 +28,8 @@ const DEFAULT: AiConfig = {
 export const useSettingsStore = defineStore('settings', () => {
   const ai = reactive<AiConfig>({ ...DEFAULT })
   const loaded = ref(false)
+  /** 本次启动是否发生了「旧模型自动迁移」，UI 读到后弹一次提示 */
+  const migrationNotice = ref('')
 
   async function load() {
     try {
@@ -38,7 +41,23 @@ export const useSettingsStore = defineStore('settings', () => {
     } catch {
       /* 首次运行无配置，保持默认 */
     }
+
+    // 只在用户确实配过 Key 的情况下做迁移提示，避免首次运行也弹窗
+    if (ai.apiKey || ai.model) {
+      const m = migrateModelConfig(ai)
+      if (m.changed) {
+        ai.provider = m.provider
+        ai.model = m.model
+        ai.baseUrl = m.baseUrl
+        migrationNotice.value = m.reason
+      }
+    }
+
     loaded.value = true
+  }
+
+  function clearMigrationNotice() {
+    migrationNotice.value = ''
   }
 
   async function save() {
@@ -53,5 +72,5 @@ export const useSettingsStore = defineStore('settings', () => {
     if (loaded.value) save()
   }, { deep: true })
 
-  return { ai, loaded, load, save }
+  return { ai, loaded, migrationNotice, load, save, clearMigrationNotice }
 })
