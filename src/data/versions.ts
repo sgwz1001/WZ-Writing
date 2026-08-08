@@ -38,6 +38,32 @@ export const CHANGE_KIND_LABEL: Record<ChangeKind, string> = {
 
 export const VERSIONS: VersionEntry[] = [
   {
+    version: '0.4.0',
+    date: '2026-08-08',
+    codename: '万象',
+    summary: '身份体系大重构：九大道统 + 策划新身份、数据隔离、首页总览、章节目录树；诗词扩展到词牌/乐府/曲/文言；三套皮肤还原米哈游美术语言。',
+    changes: [
+      { kind: 'add', target: '策划身份', detail: '文道谱系新增「策划」一脉（陆机《文赋》"课虚无以责有"），至此十大身份' },
+      { kind: 'add', target: '身份数据隔离', detail: '各身份拥有独立的项目与章节结构，首页按身份计数展示，互不串扰' },
+      { kind: 'add', target: '分身份页面', detail: '通用外壳 + 模块显隐：术语（项目/章节/新建按钮文案）、右侧工具区、初始章节随身份而变' },
+      { kind: 'add', target: '工作室返回', detail: '左上角「⌂ 首页」「⇄ 换身份」出口，身份页顶部返回首页，不再困在单页里' },
+      { kind: 'add', target: '首页总览', detail: '最外层项目仪表盘：最近/高频项目卡片、「继续写」网格与身份快捷入口' },
+      { kind: 'add', target: '搜索与筛选', detail: '先筛（身份/全部）再搜，按标题匹配，结果弹预览列表一键进入' },
+      { kind: 'add', target: '章节目录树', detail: '卷→章两层树、卷内合计字数、双击改名、拖拽排序（拖入卷中/同级插入）、删除连带子级' },
+      { kind: 'add', target: '身份小火苗', detail: '近 14 天常用身份标 🔥，点进直达上次写到的那一章' },
+      { kind: 'add', target: '词牌填词', detail: '内置 103 个词牌格律谱，选牌自动铺空行，逐句校验字数/平仄/韵脚' },
+      { kind: 'add', target: '古典文体扩展', detail: '乐府、散曲、文言文与赋的模板与引导，诗词面板四页签' },
+      { kind: 'add', target: 'AI 按主题创作', detail: '输入主题即可生成诗/词（当前词牌）/乐府/散曲/文言/赋，结果可一键插入正文' },
+      { kind: 'add', target: '外国文学章节名', detail: '取标题新增"英文标题 + 括号中文释义"风格，无 Key 时本地粗译兜底' },
+      { kind: 'add', target: '皮肤氛围层', detail: '原神提瓦特天空纹、星铁星尘、绝区零网格三类专属渐变纹理与呼吸光效' },
+      { kind: 'add', target: '自定义背景图', detail: '设置内上传背景图（自动压缩至 1600px JPEG）并持久化，浓度可调' },
+      { kind: 'add', target: '版本信息全屏', detail: '设置面板只留入口，点「查看」进入全屏版本时间轴' },
+      { kind: 'fix', target: '批量导出', detail: '逐章读取正文后导出，不再出现全部章节内容相同的错误' },
+      { kind: 'fix', target: '绝区零皮肤', detail: '移除整页高频闪烁，改为静态网格 + 缓慢流动的氛围层' },
+      { kind: 'change', target: '进入撰写', detail: '入口按钮上移吸附，身份说明挪至右侧栏，进入时带加载动画' },
+    ],
+  },
+  {
     version: '0.3.0',
     date: '2026-08-08',
     codename: '流光',
