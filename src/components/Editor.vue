@@ -1,23 +1,50 @@
 <script setup lang="ts">
-import { watch, onBeforeUnmount } from 'vue'
+import { ref, watch, onBeforeUnmount } from 'vue'
 import { useEditor, EditorContent } from '@tiptap/vue-3'
+import type { Editor } from '@tiptap/core'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import CharacterCount from '@tiptap/extension-character-count'
+import { Table } from '@tiptap/extension-table'
+import TableRow from '@tiptap/extension-table-row'
+import TableHeader from '@tiptap/extension-table-header'
+import TableCell from '@tiptap/extension-table-cell'
 import { useEditorStore } from '../stores/editor'
 import { useCorrectionStore } from '../stores/correction'
+import { useIdentitySessionStore } from '../stores/identitySession'
+import { useSettingsStore } from '../stores/settings'
 import { editorRef } from '../stores/editorRef'
 import { CorrectionDecorations } from './CorrectionDecorations'
+import EditorToolbar from './EditorToolbar.vue'
+import FindReplacePanel from './FindReplacePanel.vue'
+import { FontSize } from '../editor/FontSize'
+import { FontFamily } from '../editor/FontFamily'
+import { LineHeight } from '../editor/LineHeight'
+import { ParagraphSpacing } from '../editor/ParagraphSpacing'
+import { FirstLineIndent } from '../editor/FirstLineIndent'
+import { TextAlign } from '../editor/TextAlign'
+import { FindReplaceCommands } from '../editor/FindReplaceCommands'
 
 const editorStore = useEditorStore()
 const correctionStore = useCorrectionStore()
+const identitySession = useIdentitySessionStore()
+const settings = useSettingsStore()
+
+const showFindReplace = ref(false)
+
+defineEmits<{
+  (e: 'official'): void
+  (e: 'contract'): void
+  (e: 'ai'): void
+}>()
 
 const editor = useEditor({
   extensions: [
     StarterKit.configure({
-      // 写作场景下不需要默认 heading 的快捷键，容易误触
-      heading: {
-        levels: [1, 2, 3],
+      heading: { levels: [1, 2, 3] },
+      undoRedo: {
+        depth: settings.editor.historyDepth,
+        newGroupDelay: 500,
       },
     }),
     Placeholder.configure({
@@ -26,11 +53,24 @@ const editor = useEditor({
     CharacterCount.configure({
       mode: 'textSize',
     }),
-    // 实时纠错波浪线（不改字，只标注）
+    Table.configure({ resizable: true }),
+    TableRow,
+    TableHeader,
+    TableCell,
+    FontSize,
+    FontFamily,
+    LineHeight,
+    ParagraphSpacing,
+    FirstLineIndent,
+    TextAlign,
+    FindReplaceCommands,
     CorrectionDecorations,
   ],
   content: editorStore.content,
   autofocus: 'end',
+  onCreate({ editor }) {
+    applyIdentityDefaults(editor)
+  },
   onUpdate({ editor }) {
     const html = editor.getHTML()
     const chars = editor.storage.characterCount.characters()
@@ -43,7 +83,19 @@ const editor = useEditor({
   },
 })
 
-// 把编辑器实例交给全局引用，供「应用纠正」等动作调用
+function applyIdentityDefaults(ed: Editor) {
+  if (!ed) return
+  const profile = identitySession.layout
+  ed.chain()
+    .setFontFamily(profile.defaults.fontFamily)
+    .setFontSize(String(profile.defaults.fontSize))
+    .setLineHeight(String(profile.defaults.lineHeight))
+    .setParagraphSpacing(String(profile.defaults.paragraphSpacing))
+    .setFirstLineIndent(String(profile.defaults.firstLineIndent))
+    .setTextAlign(profile.defaults.textAlign)
+    .run()
+}
+
 watch(
   editor,
   (ed) => {
@@ -52,7 +104,15 @@ watch(
   { immediate: true },
 )
 
-// 词库 / 规则开关变化时，强制重建装饰（无需改动文档）
+watch(
+  () => identitySession.identityId,
+  () => {
+    if (editor.value && !editor.value.isDestroyed) {
+      applyIdentityDefaults(editor.value)
+    }
+  },
+)
+
 watch(
   [
     () => correctionStore.lexiconMap,
@@ -68,7 +128,6 @@ watch(
   },
 )
 
-// 当 store 中内容变化（如恢复历史版本）时同步到编辑器
 watch(
   () => editorStore.content,
   (next) => {
@@ -84,12 +143,33 @@ onBeforeUnmount(() => {
   editor.value?.destroy()
   editorRef.value = null
 })
+
+function openFindReplace() {
+  showFindReplace.value = true
+}
 </script>
 
 <template>
   <div class="editor-wrapper">
+    <EditorToolbar
+      v-if="editor && identitySession.layout.toolbar.length"
+      :editor="editor"
+      :profile="identitySession.layout"
+      @find-replace="openFindReplace"
+      @official="() => $emit('official')"
+      @contract="() => $emit('contract')"
+      @ai="() => $emit('ai')"
+    >
+      <template #split><slot name="split" /></template>
+      <template #export><slot name="export" /></template>
+    </EditorToolbar>
     <EditorContent :editor="editor" class="editor-content" />
   </div>
+  <FindReplacePanel
+    v-if="showFindReplace && editor"
+    :editor="editor"
+    @close="showFindReplace = false"
+  />
 </template>
 
 <style>
@@ -106,7 +186,6 @@ onBeforeUnmount(() => {
   overflow: hidden;
 }
 
-/* 编辑器四角 L 形角标，呼应面板框架语言 */
 .editor-wrapper::after {
   content: '';
   position: absolute;
@@ -156,17 +235,9 @@ onBeforeUnmount(() => {
   margin: var(--space-6) 0 var(--space-3);
 }
 
-.editor-content .ProseMirror h1 {
-  font-size: var(--fs-3xl);
-}
-
-.editor-content .ProseMirror h2 {
-  font-size: var(--fs-2xl);
-}
-
-.editor-content .ProseMirror h3 {
-  font-size: var(--fs-xl);
-}
+.editor-content .ProseMirror h1 { font-size: var(--fs-3xl); }
+.editor-content .ProseMirror h2 { font-size: var(--fs-2xl); }
+.editor-content .ProseMirror h3 { font-size: var(--fs-xl); }
 
 .editor-content .ProseMirror blockquote {
   border-left: 3px solid var(--c-accent);
@@ -181,13 +252,8 @@ onBeforeUnmount(() => {
   padding-left: var(--space-6);
 }
 
-.editor-content .ProseMirror ul {
-  list-style: disc;
-}
-
-.editor-content .ProseMirror ol {
-  list-style: decimal;
-}
+.editor-content .ProseMirror ul { list-style: disc; }
+.editor-content .ProseMirror ol { list-style: decimal; }
 
 .editor-content .ProseMirror li {
   margin-bottom: var(--space-2);
@@ -216,8 +282,26 @@ onBeforeUnmount(() => {
   height: 0;
 }
 
-/* 编辑器内的选中文本使用皮肤定义的颜色 */
 .editor-content .ProseMirror ::selection {
   background: var(--c-selection);
+}
+
+.editor-content .ProseMirror table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: var(--space-4) 0;
+}
+
+.editor-content .ProseMirror th,
+.editor-content .ProseMirror td {
+  border: 1px solid var(--c-border);
+  padding: var(--space-2) var(--space-3);
+  min-width: 80px;
+  text-align: left;
+}
+
+.editor-content .ProseMirror th {
+  background: var(--c-bg-sunken);
+  font-weight: 600;
 }
 </style>

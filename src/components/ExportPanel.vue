@@ -5,6 +5,14 @@ import { useProjectStore } from '../stores/project'
 import { useEditorStore } from '../stores/editor'
 import { exportDocuments, exportLogs, pickExportPath, importDocumentText, pickImportPath, type ExportDoc, type ExportFormat } from '../utils/export'
 
+async function fetchDocHtml(docId: string): Promise<string> {
+  try {
+    return await invoke<string>('read_doc', { docId })
+  } catch {
+    return ''
+  }
+}
+
 const projectStore = useProjectStore()
 const editorStore = useEditorStore()
 
@@ -43,15 +51,17 @@ async function doExport() {
   message.value = ''
   try {
     if (activeTab.value === 'doc') {
-      const docs: ExportDoc[] = projectStore.docs
-        .filter((d) => selectedIds.value.has(d.id))
-        .map((d) => ({
+      const selected = projectStore.docs.filter((d) => selectedIds.value.has(d.id))
+      if (!selected.length) return
+      const docs: ExportDoc[] = await Promise.all(
+        selected.map(async (d) => ({
           id: d.id,
           projectName: projectStore.currentProject()?.name || '未命名项目',
           title: d.title,
-          html: editorStore.content,
+          html: await fetchDocHtml(d.id),
           updatedAt: d.updatedAt,
-        }))
+        })),
+      )
       const path = await pickExportPath(docs, format.value)
       if (!path) return
       await exportDocuments(docs, format.value, path)

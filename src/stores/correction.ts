@@ -168,6 +168,11 @@ export const useCorrectionStore = defineStore('correction', () => {
     return `${i.original}->${i.revised}@${i.category}`
   }
 
+  function $reset() {
+    issues.value = []
+    ignored.value = new Set()
+  }
+
   return {
     entries,
     whitelist,
@@ -194,5 +199,6 @@ export const useCorrectionStore = defineStore('correction', () => {
     clearIgnore,
     applyIssue,
     applyAll,
+    $reset,
   }
 })

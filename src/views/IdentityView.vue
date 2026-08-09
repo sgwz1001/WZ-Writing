@@ -9,7 +9,7 @@ const hovered = ref<IdentityId | null>(null)
 
 function enterStudio() {
   localStorage.setItem('wenzai:last-identity', selected.value)
-  router.push('/studio')
+  router.push(`/studio/${selected.value}`)
 }
 </script>
 

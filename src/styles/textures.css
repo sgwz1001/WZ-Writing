@@ -1,0 +1,46 @@
+/**
+ * 文载 · 纹理与主题装饰
+ *
+ * 仅做局部装饰，绝不倾斜/扭曲任何功能面板。
+ */
+
+/* 绝区零：斜纹警戒带（仅装饰条） */
+.texture-caution {
+  background: repeating-linear-gradient(
+    45deg,
+    #111114 0px, #111114 8px,
+    #C8F73D 8px, #C8F73D 16px
+  );
+}
+
+/* 羊皮纸噪点（原神） */
+.texture-parchment {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: 0.06;
+}
+
+/* 星穹：网格 + 星场 */
+.texture-grid {
+  background:
+    linear-gradient(rgba(227, 184, 114, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(227, 184, 114, 0.04) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+.texture-starfield {
+  background:
+    radial-gradient(circle at 20% 30%, rgba(138, 124, 245, 0.12) 0%, transparent 35%),
+    radial-gradient(circle at 80% 70%, rgba(227, 184, 114, 0.08) 0%, transparent 40%);
+}
+
+/* 扫描线动画（绝区零） */
+@keyframes scanline {
+  0% { transform: translateY(-10%); }
+  100% { transform: translateY(110%); }
+}
+
+/* 霓虹脉冲（绝区零按钮/装饰） */
+@keyframes neon-pulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(200, 247, 61, 0.35); }
+  50% { box-shadow: 0 0 18px rgba(200, 247, 61, 0.65); }
+}

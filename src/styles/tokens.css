@@ -64,12 +64,13 @@
   --ls-widest: 0.2em;
 
   /* ── 字族 ─────────────────────────────────────
-     用户可上传自定义字体，届时覆写 --font-user-* 即可。 */
-  --font-ui: var(--font-user-ui, 'Microsoft YaHei UI', 'PingFang SC', 'Noto Sans SC', system-ui, sans-serif);
-  --font-serif: var(--font-user-serif, 'Source Han Serif SC', 'Noto Serif SC', 'SimSun', Georgia, serif);
-  --font-mono: var(--font-user-mono, 'JetBrains Mono', 'Cascadia Code', Consolas, monospace);
-  --font-manuscript: var(--font-user-manuscript, var(--font-serif));
-  --font-display: var(--font-user-display, var(--font-serif));
+     用户可上传自定义字体，届时 --font-user-family 会插在最前面。 */
+  --font-user-family: ;
+  --font-ui: var(--font-user-family, 'Microsoft YaHei UI'), 'PingFang SC', 'Noto Sans SC', system-ui, sans-serif;
+  --font-serif: var(--font-user-family, 'Source Han Serif SC'), 'Noto Serif SC', 'SimSun', Georgia, serif;
+  --font-mono: 'JetBrains Mono', 'Cascadia Code', Consolas, monospace;
+  --font-manuscript: var(--font-user-family, var(--font-serif));
+  --font-display: var(--font-user-family, var(--font-serif));
 
   /* 常用间距别名：既有 --sp-* 精确阶，也有 --space-* 语义阶 */
   --space-1: var(--sp-1);

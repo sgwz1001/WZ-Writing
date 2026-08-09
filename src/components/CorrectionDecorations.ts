@@ -56,7 +56,8 @@ function buildDecorations(doc: PMNode): BuildResult {
 
     for (const it of found) {
       const from = pos + 1 + it.index
-      const to = from + it.length
+      const len = it.original.length || it.length
+      const to = from + len
       if (!isFree(from, to)) continue
       used.push([from, to])
 
@@ -71,7 +72,7 @@ function buildDecorations(doc: PMNode): BuildResult {
         from,
         to,
         index: it.index,
-        length: it.length,
+        length: len,
         original: it.original,
         revised: it.revised,
         category: it.category,

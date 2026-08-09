@@ -5,15 +5,38 @@ import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow'
 import TitleBar from './components/TitleBar.vue'
 import LoadingOverlay from './components/LoadingOverlay.vue'
 import SettingsPanel from './components/SettingsPanel.vue'
+import NoiseOverlay from './components/theme/NoiseOverlay.vue'
+import Scanlines from './components/theme/Scanlines.vue'
+import ModeTransition from './components/ModeTransition.vue'
+import { useAppearanceStore } from './stores/appearance'
+import { useSkillLibraryStore } from './stores/skillLibrary'
+import { useThemeTransition } from './composables/useThemeTransition'
 
 const route = useRoute()
+const appearance = useAppearanceStore()
+const skillLibrary = useSkillLibraryStore()
 const showTitlebar = import.meta.env.TAURI_ENV_PLATFORM !== 'mobile'
 
 /** 常驻设置入口：除开机动画外，任何界面都能看到 */
 const showSettings = ref(false)
 const showGear = computed(() => route.name !== 'splash')
 
+const transition = useThemeTransition(() => {
+  appearance.toggleMode()
+})
+
+function onToggleMode(e: MouseEvent) {
+  if (!appearance.animations) {
+    appearance.toggleMode()
+    return
+  }
+  transition.trigger(e, appearance.skin)
+}
+
 onMounted(async () => {
+  // 预加载 Skill 库（异步，不阻塞 UI）
+  skillLibrary.load().catch(() => {})
+
   //  splash 自己会负责显示窗口；工作室页需要在这里显示
   if (route.name !== 'splash') {
     await getCurrentWebviewWindow().show()
@@ -23,6 +46,11 @@ onMounted(async () => {
 
 <template>
   <div class="app-shell">
+    <div class="app-bg" :data-bg-fit="appearance.bgFit" aria-hidden="true" />
+    <div class="app-dim" aria-hidden="true" />
+    <NoiseOverlay />
+    <Scanlines v-if="appearance.skin === 'zenless'" />
+
     <TitleBar v-if="showTitlebar" />
 
     <main class="app-main">
@@ -60,12 +88,22 @@ onMounted(async () => {
       </button>
     </Transition>
 
-    <SettingsPanel v-if="showSettings" @close="showSettings = false" />
+    <SettingsPanel v-if="showSettings" @close="showSettings = false" @toggle-mode="onToggleMode" />
 
     <LoadingOverlay />
 
-    <!-- 日夜切换时全屏叠一层淡入淡出，避免元素各自动画导致花屏 -->
-    <div class="mode-transition" aria-hidden="true" />
+    <Transition
+      :css="false"
+      @before-enter="transition.beforeEnter"
+      @enter="transition.enter"
+      @leave="transition.leave"
+    >
+      <ModeTransition
+        v-if="transition.animating.value"
+        :origin="transition.origin.value"
+        :skin="transition.skin.value"
+      />
+    </Transition>
   </div>
 </template>
 
@@ -78,6 +116,39 @@ onMounted(async () => {
   background: var(--c-bg-base);
   color: var(--c-text-base);
   overflow: hidden;
+  position: relative;
+}
+
+.app-bg {
+  position: absolute;
+  inset: 0;
+  background-image: var(--user-bg-image, none);
+  background-position: center;
+  opacity: var(--user-bg-opacity, 0.25);
+  pointer-events: none;
+  z-index: -2;
+}
+
+.app-bg[data-bg-fit='cover'],
+.app-bg[data-bg-fit='center'] {
+  background-size: cover;
+}
+.app-bg[data-bg-fit='tile'] {
+  background-size: auto;
+  background-repeat: repeat;
+}
+
+[data-anim='on'] .app-bg {
+  transition: opacity var(--dur-base) var(--ease-out);
+}
+
+.app-dim {
+  position: absolute;
+  inset: 0;
+  background: var(--c-bg-base);
+  opacity: 0.72;
+  pointer-events: none;
+  z-index: -1;
 }
 
 .app-main {
@@ -172,17 +243,4 @@ onMounted(async () => {
   transition: none;
 }
 
-.mode-transition {
-  pointer-events: none;
-  position: fixed;
-  inset: 0;
-  z-index: 9998;
-  opacity: 0;
-  background: var(--c-bg-base);
-  transition: opacity 0.45s ease;
-}
-
-[data-mode-flipping] .mode-transition {
-  opacity: 1;
-}
 </style>

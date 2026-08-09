@@ -1,0 +1,92 @@
+/**
+ * 文载 · 主题化组件差异
+ *
+ * 根据 [data-skin] 为按钮、面板、输入框等提供不同视觉气质。
+ */
+
+/* ── 按钮 ── */
+[data-skin='genshin'] .wz-btn--primary {
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.15s var(--ease-out), box-shadow 0.15s var(--ease-out);
+}
+[data-skin='genshin'] .wz-btn--primary:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+[data-skin='genshin'] .wz-btn--primary:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
+}
+
+[data-skin='star'] .wz-btn--primary {
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--radius-sm);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 0 12px var(--c-accent-soft);
+  transition: box-shadow 0.15s var(--ease-out);
+}
+[data-skin='star'] .wz-btn--primary:hover {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 0 18px var(--c-accent-soft);
+}
+
+[data-skin='zenless'] .wz-btn--primary {
+  border-radius: 2px;
+  box-shadow: var(--shadow-md);
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+}
+[data-skin='zenless'] .wz-btn--primary:hover {
+  transform: translate(1px, 1px);
+  box-shadow: var(--shadow-sm);
+}
+[data-skin='zenless'] .wz-btn--primary:active {
+  transform: translate(2px, 2px);
+  box-shadow: none;
+}
+
+/* ── 面板 ── */
+[data-skin='genshin'] .wz-panel {
+  border-radius: calc(var(--radius-xl) * var(--radius-scale, 1));
+  box-shadow: var(--shadow-sm);
+}
+
+[data-skin='star'] .wz-panel {
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--c-border);
+  box-shadow: var(--shadow-md);
+}
+
+[data-skin='zenless'] .wz-panel {
+  border-radius: 2px;
+  border: 1px solid var(--c-border-strong);
+  box-shadow: var(--shadow-md);
+}
+
+/* ── 输入框 ── */
+[data-skin='zenless'] .wz-input,
+[data-skin='zenless'] input[type='text'],
+[data-skin='zenless'] input[type='password'],
+[data-skin='zenless'] textarea {
+  border-radius: 1px;
+  border-width: 1px;
+}
+
+[data-skin='genshin'] .wz-input,
+[data-skin='genshin'] input[type='text'],
+[data-skin='genshin'] input[type='password'],
+[data-skin='genshin'] textarea {
+  border-radius: calc(var(--radius-md) * var(--radius-scale, 1));
+}
+
+/* ── 列表项 ── */
+[data-skin='zenless'] .wz-list-item.is-active {
+  box-shadow: inset 3px 0 0 0 var(--c-accent);
+}
+
+/* ── 装饰大字容器（用于欢迎页/加载页） ── */
+.decorative-text-host {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}

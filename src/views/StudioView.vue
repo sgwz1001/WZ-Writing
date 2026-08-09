@@ -1,11 +1,15 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
+import { invoke } from '@tauri-apps/api/core'
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow'
 import { useAppearanceStore } from '../stores/appearance'
 import { useProjectStore } from '../stores/project'
 import { useEditorStore } from '../stores/editor'
-import { getIdentity } from '../data/wendao-lineage'
-import { numberToChinese } from '../utils/text'
+import { useCorrectionStore } from '../stores/correction'
+import { useIdentitySessionStore } from '../stores/identitySession'
+import { getLayoutProfile } from '../data/layoutProfiles'
+import { isValidIdentity } from '../router'
 import Editor from '../components/Editor.vue'
 import WordCountPanel from '../components/WordCountPanel.vue'
 import FormatSplitPanel from '../components/FormatSplitPanel.vue'
@@ -16,39 +20,49 @@ import ApiSettingsPanel from '../components/ApiSettingsPanel.vue'
 import TitleSuggestPanel from '../components/TitleSuggestPanel.vue'
 import WeChatPanel from '../components/WeChatPanel.vue'
 import PoetryPanel from '../components/PoetryPanel.vue'
-import { useCorrectionStore } from '../stores/correction'
+import ChapterCreateDialog from '../components/ChapterCreateDialog.vue'
+import OfficialTemplatePanel from '../components/professional/OfficialTemplatePanel.vue'
+import OfficialFormatToolbar from '../components/professional/OfficialFormatToolbar.vue'
+import ContractTemplatePanel from '../components/professional/ContractTemplatePanel.vue'
+import ContractRiskPanel from '../components/professional/ContractRiskPanel.vue'
+import ContractDraftForm from '../components/professional/ContractDraftForm.vue'
+import AiWritePanel from '../components/professional/AiWritePanel.vue'
 
 const appearance = useAppearanceStore()
 const projectStore = useProjectStore()
 const editorStore = useEditorStore()
 const correctionStore = useCorrectionStore()
+const identitySession = useIdentitySessionStore()
+const route = useRoute()
 
 const newProjectName = ref('')
 const showNewProject = ref(false)
-const newDocTitle = ref('')
 const activeDoc = ref<string | null>(null)
 const showLexicon = ref(false)
 const showApiSettings = ref(false)
 const showTitle = ref(false)
 const showWeChat = ref(false)
 const showPoetry = ref(false)
-const identityId = ref(localStorage.getItem('wenzai:last-identity') || 'general')
+const showChapterDialog = ref(false)
+const newProjectInput = ref<HTMLInputElement | null>(null)
 
-const identity = getIdentity(identityId.value)
-if (identity.preferredSkin) {
-  appearance.setSkin(identity.preferredSkin)
-}
+const identity = computed(() => identitySession.identity)
+const layout = computed(() => identitySession.layout)
 
+// 从 URL 恢复身份
 onMounted(async () => {
+  const id = route.params.identity as string | undefined
+  if (id && isValidIdentity(id)) {
+    identitySession.setIdentityId(id)
+    appearance.setSkin(getLayoutProfile(id).preferredSkin)
+  }
+
   await getCurrentWebviewWindow().show()
-  await projectStore.loadProjects()
-  // 预载错词库 / 白名单，供编辑器实时标红使用
+  await identitySession.init()
   correctionStore.refreshAll()
 })
 
-const newProjectInput = ref<HTMLInputElement | null>(null)
-
-// 弹窗一出现就把光标放进输入框，少点一次鼠标
+// 弹窗一出现就把光标放进输入框
 watch(showNewProject, async (open) => {
   if (open) {
     await nextTick()
@@ -60,30 +74,25 @@ watch(showNewProject, async (open) => {
 
 async function createProject() {
   if (!newProjectName.value.trim()) return
-  await projectStore.createProject(newProjectName.value, identityId.value)
+  await projectStore.createProject(newProjectName.value, identitySession.identityId)
   newProjectName.value = ''
   showNewProject.value = false
 }
 
-/** 章节自动编号：当前项目已有 N 篇章节，则新章节默认「第 N+1 章」 */
-const suggestedChapter = computed(() => {
-  const n = projectStore.docs.filter((d) => d.kind === 'chapter').length + 1
-  return `第${numberToChinese(n)}章`
-})
-
-async function createDoc() {
+async function createDoc(fullTitle: string) {
   const pid = projectStore.currentProjectId
   if (!pid) return
-  const title = newDocTitle.value.trim() || suggestedChapter.value
-  const doc = await projectStore.createDoc(pid, title)
+  const doc = await projectStore.createDoc(pid, fullTitle)
   activeDoc.value = doc.id
-  editorStore.open(doc.id, pid, doc.title)
-  newDocTitle.value = ''
+  const content = await invoke<string>('read_doc', { docId: doc.id }).catch(() => '')
+  editorStore.open(doc.id, pid, doc.title, content)
+  showChapterDialog.value = false
 }
 
 function selectProject(id: string) {
   projectStore.loadDocs(id)
   activeDoc.value = null
+  editorStore.$reset()
 }
 
 function cycleSkin() {
@@ -91,13 +100,24 @@ function cycleSkin() {
   const next = skins[(skins.indexOf(appearance.skin) + 1) % skins.length]
   appearance.setSkin(next)
 }
+
+const suggestedCount = computed(() =>
+  projectStore.docs.filter((d) => d.kind === 'chapter').length,
+)
+
+const showInspectorPanel = computed(() => (id: string) => {
+  if (!layout.value.showInspector) return false
+  return layout.value.inspectorPanels.includes(id as any)
+})
+
+const hasModule = computed(() => (id: string) => layout.value.sidebarModules.includes(id as any))
 </script>
 
 <template>
   <div class="studio">
-    <aside class="sidebar">
+    <aside v-if="layout.showSidebar" class="sidebar">
       <div class="sidebar-head">
-        <div class="wz-panel wz-panel--pad identity-badge">
+        <div v-if="hasModule('identity-badge')" class="wz-panel wz-panel--pad identity-badge">
           <span class="identity-icon">{{ identity.icon }}</span>
           <div class="identity-meta">
             <div class="identity-name">{{ identity.name }}</div>
@@ -105,12 +125,12 @@ function cycleSkin() {
           </div>
         </div>
 
-        <div class="project-actions">
+        <div v-if="hasModule('projects')" class="project-actions">
           <button class="wz-btn wz-btn--primary wz-btn--sm" @click="showNewProject = true">+ 新建项目</button>
         </div>
       </div>
 
-      <div class="project-list">
+      <div v-if="hasModule('projects')" class="project-list">
         <div
           v-for="p in projectStore.projects"
           :key="p.id"
@@ -125,8 +145,12 @@ function cycleSkin() {
         <p v-if="!projectStore.projects.length" class="wz-empty">还没有项目，先建一个吧。</p>
       </div>
 
+      <div v-if="hasModule('quick-chapter') && projectStore.currentProjectId" class="quick-chapter">
+        <button class="wz-btn wz-btn--primary wz-btn--sm w-full" @click="showChapterDialog = true">+ 新建章节</button>
+      </div>
+
       <div class="sidebar-foot">
-        <button class="wz-btn wz-btn--ghost wz-btn--sm" @click="cycleSkin">
+        <button v-if="hasModule('skin-switch')" class="wz-btn wz-btn--ghost wz-btn--sm" @click="cycleSkin">
           切换皮肤：{{ appearance.skin }}
         </button>
         <button class="wz-btn wz-btn--ghost wz-btn--sm" @click="appearance.toggleMode">
@@ -137,37 +161,27 @@ function cycleSkin() {
 
     <section class="workspace">
       <div v-if="!activeDoc" class="welcome">
-        <h2>文载工作室</h2>
+        <h2>文载工作室 · {{ identity.name }}</h2>
         <p>选择左侧项目，或新建一篇开始写作。</p>
 
         <div v-if="projectStore.currentProjectId" class="quick-create">
-          <input
-            v-model="newDocTitle"
-            class="wz-input"
-            :placeholder="suggestedChapter"
-            @keyup.enter="createDoc"
-          />
-          <button class="wz-btn wz-btn--primary" @click="createDoc">+ 新建章节</button>
+          <button class="wz-btn wz-btn--primary" @click="showChapterDialog = true">+ 新建章节</button>
         </div>
       </div>
 
       <div v-else class="editor-shell">
-        <div class="editor-toolbar">
+        <div class="editor-header">
           <input v-model="editorStore.title" class="doc-title" placeholder="无标题" />
-          <button class="wz-btn wz-btn--ghost wz-btn--sm" @click="showTitle = true">取标题</button>
-          <div class="toolbar-tools">
-            <button class="wz-btn wz-btn--ghost wz-btn--sm" @click="showLexicon = true">词库</button>
-            <button class="wz-btn wz-btn--ghost wz-btn--sm" @click="showApiSettings = true">AI</button>
-            <FormatSplitPanel />
-            <button class="wz-btn wz-btn--ghost wz-btn--sm" @click="showWeChat = true">公众号</button>
-            <button class="wz-btn wz-btn--ghost wz-btn--sm" @click="showPoetry = true">格律</button>
-            <ExportPanel />
-          </div>
           <span class="save-state" :class="{ saving: editorStore.saving }">
             {{ editorStore.saving ? '保存中…' : editorStore.savedAt ? '已保存' : '待保存' }}
           </span>
         </div>
-        <Editor />
+
+        <Editor>
+          <template #split><FormatSplitPanel /></template>
+          <template #export><ExportPanel /></template>
+        </Editor>
+
         <div class="status-bar">
           <span>{{ editorStore.displayCharCount }} 字</span>
           <span>光标 {{ editorStore.cursor }}</span>
@@ -175,9 +189,15 @@ function cycleSkin() {
       </div>
     </section>
 
-    <aside class="inspector">
-      <CorrectionPanel />
-      <WordCountPanel />
+    <aside v-if="layout.showInspector" class="inspector">
+      <OfficialTemplatePanel v-if="showInspectorPanel('official')" />
+      <OfficialFormatToolbar v-if="showInspectorPanel('official')" />
+      <ContractTemplatePanel v-if="showInspectorPanel('contract')" />
+      <ContractRiskPanel v-if="showInspectorPanel('contract')" />
+      <ContractDraftForm v-if="showInspectorPanel('contract')" />
+      <AiWritePanel v-if="showInspectorPanel('ai')" />
+      <CorrectionPanel v-if="showInspectorPanel('correction')" />
+      <WordCountPanel v-if="showInspectorPanel('word-count')" />
     </aside>
 
     <LexiconPanel v-if="showLexicon" @close="showLexicon = false" />
@@ -185,6 +205,14 @@ function cycleSkin() {
     <TitleSuggestPanel v-if="showTitle" @close="showTitle = false" />
     <WeChatPanel v-if="showWeChat" @close="showWeChat = false" />
     <PoetryPanel v-if="showPoetry" @close="showPoetry = false" />
+
+    <ChapterCreateDialog
+      v-if="showChapterDialog"
+      :identity-id="identitySession.identityId"
+      :existing-count="suggestedCount"
+      @close="showChapterDialog = false"
+      @create="createDoc"
+    />
 
     <Teleport to="body">
       <div
@@ -275,9 +303,15 @@ function cycleSkin() {
 }
 
 .project-actions,
-.quick-create {
+.quick-create,
+.quick-chapter {
   display: flex;
   gap: var(--space-2);
+}
+
+.w-full {
+  width: 100%;
+  justify-content: center;
 }
 
 .project-list {
@@ -369,17 +403,11 @@ function cycleSkin() {
   width: 100%;
 }
 
-.editor-toolbar {
+.editor-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-4);
-}
-
-.toolbar-tools {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
 }
 
 .doc-title {

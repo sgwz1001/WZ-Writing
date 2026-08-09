@@ -3,19 +3,23 @@ import { ref } from 'vue'
 import { useAppearanceStore, type Skin } from '../stores/appearance'
 import ApiSettingsPanel from './ApiSettingsPanel.vue'
 import VersionTimeline from './VersionTimeline.vue'
+import LoaderLexiconPanel from './LoaderLexiconPanel.vue'
+import SkillManager from './SkillManager.vue'
 import { CURRENT_VERSION } from '../data/versions'
 
-const emit = defineEmits<{ (e: 'close'): void }>()
+const emit = defineEmits<{ (e: 'close'): void; (e: 'toggle-mode', event: MouseEvent): void }>()
 
 const appearance = useAppearanceStore()
 const showApi = ref(false)
 
-type TabKey = 'look' | 'motion' | 'ai' | 'version'
+type TabKey = 'look' | 'motion' | 'loader' | 'skill' | 'ai' | 'version'
 const tab = ref<TabKey>('look')
 
 const TABS: { key: TabKey; label: string; icon: string }[] = [
   { key: 'look', label: '外观', icon: '◈' },
   { key: 'motion', label: '动效', icon: '◐' },
+  { key: 'loader', label: '加载词库', icon: '✦' },
+  { key: 'skill', label: 'Skill', icon: '◇' },
   { key: 'ai', label: 'AI 接入', icon: '⚙' },
   { key: 'version', label: '版本信息', icon: '⌗' },
 ]
@@ -76,16 +80,39 @@ const SKINS: { key: Skin; name: string; desc: string }[] = [
 
             <h4 class="pane-title">明暗模式</h4>
             <div class="seg">
-              <button class="seg-btn" :class="{ 'is-active': appearance.mode === 'day' }" @click="appearance.setMode('day')">
+              <button
+                class="seg-btn"
+                :class="{ 'is-active': appearance.mode === 'day' }"
+                @click="emit('toggle-mode', $event)"
+              >
                 日间
               </button>
-              <button class="seg-btn" :class="{ 'is-active': appearance.mode === 'night' }" @click="appearance.setMode('night')">
+              <button
+                class="seg-btn"
+                :class="{ 'is-active': appearance.mode === 'night' }"
+                @click="emit('toggle-mode', $event)"
+              >
                 夜间
               </button>
             </div>
 
-            <h4 class="pane-title">毛玻璃强度</h4>
+            <h4 class="pane-title">自定义背景</h4>
+            <div class="bg-row">
+              <button class="wz-btn wz-btn--sm" @click="appearance.pickBgImage">上传背景图</button>
+              <select v-model="appearance.bgFit" class="wz-select" @change="appearance.setBgFit(appearance.bgFit)">
+                <option value="cover">填充</option>
+                <option value="tile">平铺</option>
+                <option value="center">居中</option>
+              </select>
+              <button v-if="appearance.bgImage" class="wz-btn wz-btn--ghost wz-btn--sm" @click="appearance.setBgImage(null)">
+                清除
+              </button>
+            </div>
+            <div v-if="appearance.bgImage" class="bg-preview" :style="{ backgroundImage: `url(${appearance.bgImage})` }" />
+
+            <h4 class="pane-title">毛玻璃特效</h4>
             <div class="slider-row">
+              <label class="slider-label">模糊</label>
               <input
                 class="wz-slider"
                 type="range"
@@ -97,7 +124,33 @@ const SKINS: { key: Skin; name: string; desc: string }[] = [
               />
               <span class="slider-val">{{ appearance.blur }}px</span>
             </div>
-            <p class="pane-hint">数值越大背景越朦胧；设为 0 则完全实心，低配机器更流畅。</p>
+            <div class="slider-row">
+              <label class="slider-label">面板透明</label>
+              <input
+                class="wz-slider"
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                :value="appearance.glassOpacity"
+                @input="appearance.setGlassOpacity(Number(($event.target as HTMLInputElement).value))"
+              />
+              <span class="slider-val">{{ Math.round(appearance.glassOpacity * 100) }}%</span>
+            </div>
+            <div class="slider-row">
+              <label class="slider-label">饱和度</label>
+              <input
+                class="wz-slider"
+                type="range"
+                min="100"
+                max="200"
+                step="10"
+                :value="appearance.saturate"
+                @input="appearance.setSaturate(Number(($event.target as HTMLInputElement).value))"
+              />
+              <span class="slider-val">{{ appearance.saturate }}%</span>
+            </div>
+            <p class="pane-hint">模糊越大背景越朦胧；设为 0 则完全实心，低配机器更流畅。</p>
           </section>
 
           <!-- 动效 -->
@@ -127,6 +180,16 @@ const SKINS: { key: Skin; name: string; desc: string }[] = [
               <li><b>皮肤差异</b>：星穹为环形扫描、提瓦特为双环呼吸、新艾利都为硬边闪烁。</li>
             </ul>
             <p class="pane-hint">若系统已开启「减弱动态效果」，应用会自动遵循，无需手动关闭。</p>
+          </section>
+
+          <!-- 加载词库 -->
+          <LoaderLexiconPanel v-else-if="tab === 'loader'" />
+
+          <!-- Skill 管理 -->
+          <section v-else-if="tab === 'skill'" class="pane">
+            <h4 class="pane-title">本地 Skill 库</h4>
+            <p class="pane-hint">AI 操作前会优先匹配内置 Skill；你也可以导入自定义 SKILL.md。</p>
+            <SkillManager />
           </section>
 
           <!-- AI -->
@@ -395,6 +458,38 @@ const SKINS: { key: Skin; name: string; desc: string }[] = [
 }
 .feat-list b {
   color: var(--c-text-base);
+}
+
+/* ── 自定义背景 ── */
+.bg-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+.wz-select {
+  padding: 5px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--c-border);
+  background: var(--c-surface);
+  color: var(--c-text-base);
+  font-size: 12px;
+}
+.bg-preview {
+  width: 100%;
+  height: 90px;
+  border-radius: var(--radius-md);
+  background-size: cover;
+  background-position: center;
+  border: 1px solid var(--c-border);
+}
+
+/* ── 滑块标签 ── */
+.slider-label {
+  width: 56px;
+  font-size: 12px;
+  color: var(--c-text-secondary);
+  flex-shrink: 0;
 }
 
 /* ── 窄屏 ── */

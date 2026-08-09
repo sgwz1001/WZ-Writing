@@ -25,6 +25,7 @@ export type IdentityId =
   | 'editor'
   | 'essayist'
   | 'screenwriter'
+  | 'planner'
 
 export interface Maxim {
   /** 题于界面的短句，取原文中最凝练的一段 */
@@ -253,10 +254,31 @@ export const IDENTITIES: readonly Identity[] = [
     modules: ['editor', 'autosave', 'proofread', 'script-format'],
     preferredSkin: 'zenless',
   },
+
+  {
+    id: 'planner',
+    name: '策划',
+    icon: '📋',
+    tagline: '方案、合同与活动策划',
+    maxim: {
+      text: '凡事豫则立，不豫则废',
+      source:
+        '凡事豫则立，不豫则废。言前定则不跲，事前定则不困，行前定则不疚，道前定则不穷。',
+      work: '《礼记·中庸》',
+      author: '子思',
+      dynasty: '先秦',
+      gloss:
+        '任何事情，预先谋划就能成功，没有准备就会失败。说话前先想好，就不会卡壳；做事前先定好，就不会困窘；行动前先确定，就不会内疚；行路前先选定方向，就不会走投无路。',
+      affinity:
+        '「豫」就是策划的本意：不是临时起意，而是在开口、动手、迈步之前，先把骨架搭好。合同与方案，都是把未来的不确定性提前锁进条款里的技艺。',
+    },
+    modules: ['editor', 'autosave', 'proofread', 'contract', 'outline'],
+    preferredSkin: 'star',
+  },
 ] as const
 
 /** 按 id 取身份，未命中则回退到通用 */
-export const IDENTITY_ORDER: readonly IdentityId[] = ['general', 'webnovel', 'poet', 'official', 'scholar', 'nonfiction', 'editor', 'essayist', 'screenwriter'] as const
+export const IDENTITY_ORDER: readonly IdentityId[] = ['general', 'webnovel', 'poet', 'official', 'scholar', 'nonfiction', 'editor', 'essayist', 'screenwriter', 'planner'] as const
 
 export function getIdentity(id: IdentityId | string | null | undefined): Identity {
   return IDENTITIES.find((i) => i.id === id) ?? IDENTITIES[0]

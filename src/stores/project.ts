@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { invoke } from '@tauri-apps/api/core'
+import type { IdentityId } from '../data/wendao-lineage'
 
 export interface Project {
   id: string
@@ -44,6 +45,18 @@ export const useProjectStore = defineStore('project', () => {
     }
   }
 
+  async function loadProjectsForIdentity(identityId: IdentityId, includeArchived = false) {
+    loading.value = true
+    try {
+      const all = await invoke<Project[]>('list_projects', { includeArchived })
+      projects.value = all.filter((p) => p.identity === identityId)
+    } finally {
+      loading.value = false
+    }
+    currentProjectId.value = null
+    docs.value = []
+  }
+
   async function createProject(name: string, identity: string, description = '', color = '#A0AEC0') {
     const p = await invoke<Project>('create_project', {
       name,
@@ -75,15 +88,24 @@ export const useProjectStore = defineStore('project', () => {
     return projects.value.find((p) => p.id === currentProjectId.value) || null
   }
 
+  function $reset() {
+    projects.value = []
+    currentProjectId.value = null
+    docs.value = []
+    loading.value = false
+  }
+
   return {
     projects,
     currentProjectId,
     docs,
     loading,
     loadProjects,
+    loadProjectsForIdentity,
     createProject,
     loadDocs,
     createDoc,
     currentProject,
+    $reset,
   }
 })

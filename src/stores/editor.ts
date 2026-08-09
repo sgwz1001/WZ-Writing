@@ -97,6 +97,18 @@ export const useEditorStore = defineStore('editor', () => {
     }
   }
 
+  function $reset() {
+    docId.value = null
+    projectId.value = null
+    title.value = '未命名'
+    content.value = ''
+    cursor.value = 0
+    savedAt.value = null
+    saving.value = false
+    lastHeartbeat.value = 0
+    charCount.value = 0
+  }
+
   /**
    * 一键排版：按给定激进/保守等级拆分正文，返回段落数组。
    */
@@ -143,5 +155,6 @@ export const useEditorStore = defineStore('editor', () => {
     updateContent,
     splitCurrentContent,
     applySplit,
+    $reset,
   }
 })

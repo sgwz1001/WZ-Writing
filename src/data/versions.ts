@@ -38,12 +38,32 @@ export const CHANGE_KIND_LABEL: Record<ChangeKind, string> = {
 
 export const VERSIONS: VersionEntry[] = [
   {
+    version: '0.5.0',
+    date: '2026-08-09',
+    codename: '万象',
+    summary: '基于 v0.3.0 全面重做：10 个身份彻底独立、本地纠错重做、编辑器补齐、主题焕新、加载动效与名词字库、本地 Skill 系统、AI 配置界面，并新增公文 / 合同 / 按身份 AI 写作。',
+    changes: [
+      { kind: 'add', target: '身份独立布局', detail: '10 个身份各自一套布局 / 工具栏 / 章节体系 / 默认排版，由布局引擎按 identitySession.layout 动态渲染，不再套同一套三栏模板' },
+      { kind: 'add', target: '章节体系', detail: '小说卷→章、剧本幕→场、诗词词牌→词、策划分类→文件、学术章→节、此刻日期条目；编号固定「第 + N + 单位」，单位可切换' },
+      { kind: 'add', target: '数据隔离', detail: '切换身份即进入全新空间：自动 panicSave、清空编辑器/项目/纠错，再按 identityId 载入新项目，互不串台' },
+      { kind: 'add', target: '本地纠错重做', detail: '未勾选 AI 绝不调用接口；原文标红/黄并与右侧面板一一对应；支持单条/批量应用、撤销与 CSV 导出' },
+      { kind: 'add', target: '编辑器扩展', detail: '字号、字体（含仿宋_GB2312）、行距、段距、首行缩进、居左/中/右/两端对齐、查找替换、表格、撤销/重做（可配置历史步数）' },
+      { kind: 'add', target: '主题重做', detail: '绝区零改用素材包纹理/颜色/装饰字而非倾斜界面；日夜切换为从按钮位置圆形扩散；支持自定义背景 + iOS 毛玻璃强度控制' },
+      { kind: 'add', target: '加载动画 + 名词字库', detail: '三套主题加载动画；中心轮番显示文学/语言学/训诂/音韵/数学统计高端名词并计时；词库可在设置中自定义' },
+      { kind: 'add', target: 'Skill 系统', detail: '内置 11 个本地 Skill，AI 操作前先匹配 Skill；支持用户自定义 / 导入 / 导出' },
+      { kind: 'add', target: 'AI 配置界面', detail: '厂商 / 模型 / API Key 三选一呈现；默认接口与高级参数；测试连接；模型卡片 UI' },
+      { kind: 'add', target: '公文模块', detail: '15 种法定公文模板插入；一键套用 GB/T 9704 版式（仿宋_GB2312 16pt、首行缩进 2 字符、标题居中）' },
+      { kind: 'add', target: '合同模块', detail: '8 类合同模板 + 本地风险识别（付款模糊 / 缺少终止·争议·违约 / 知识产权不明等）+ AI 拟稿' },
+      { kind: 'add', target: '按身份 AI 写作', detail: '诗词无字数要求、公文直接选文种、小说按类型并显示字数，文体随身份给出' },
+    ],
+  },
+  {
     version: '0.3.0',
     date: '2026-08-08',
     codename: '流光',
     summary: '第四块创作辅助三件套上线；补齐加载动效、常驻设置与版本时间轴，并修复四处体验缺陷。',
     changes: [
-      { kind: 'add', target: '一键取标题', detail: '4 种风格（网文/文艺/悬疑/纪实）候选生成，接大模型，无 Key 时本地启发式兜底' },
+      { kind: 'add', target: '一键取标题', detail: '4 种风格（中国网文/日式轻小说/欧美传统文学/古典章回体）候选生成，接大模型，无 Key 时本地启发式兜底' },
       { kind: 'add', target: '微信公众号排版', detail: '正文转公众号内联样式 HTML，支持主题配色、首行缩进、分割线与一键复制' },
       { kind: 'add', target: '格律诗词', detail: '五绝/七绝/五律/七律平仄校验，逐字标平仄与出律高亮，韵脚检查 + AI 品评' },
       { kind: 'add', target: '加载动画', detail: 'AI/API 调用与页面跳转期间展示主题化加载层，三套皮肤各有专属动效' },
@@ -69,7 +89,6 @@ export const VERSIONS: VersionEntry[] = [
       { kind: 'add', target: '错词库管理', detail: '自定义错词、白名单增删改查，数据落 SQLite 本地库' },
       { kind: 'add', target: '实时标红', detail: '基于 TipTap Decoration 在正文中直接高亮疑似错词' },
       { kind: 'add', target: '大模型接入层', detail: '统一 chat 接口，支持多家服务商切换、baseUrl/模型自定义与连通性测试' },
-      { kind: 'add', target: '深度纠错', detail: '调用大模型对整段文字做语义级校对，与本地结果合并展示' },
       { kind: 'change', target: 'API Key 存储', detail: '仅落本机数据库，全应用唯一联网点收敛到 utils/ai.ts' },
       { kind: 'fix', target: '纠错引擎', detail: '修复重叠区间、空白段落误报与光标偏移三处问题' },
     ],
